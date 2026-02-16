@@ -1,0 +1,100 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/JinethBosilu/SchemaIngest/blob/main/packages/schema-pack/schema-pack.schema.json",
+  "title": "SchemaPack",
+  "description": "Database schema introspection result produced by the SchemaIngest agent.",
+  "type": "object",
+  "required": ["meta", "tables", "relationships"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["dbName", "schema", "generatedAt", "agentVersion"],
+      "properties": {
+        "dbName": { "type": "string" },
+        "dbVersion": { "type": "string" },
+        "schema": { "type": "string", "default": "public" },
+        "generatedAt": { "type": "string", "format": "date-time" },
+        "agentVersion": { "type": "string" }
+      }
+    },
+    "tables": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "schema", "columns", "primaryKey", "indexes", "constraints"],
+        "properties": {
+          "name": { "type": "string" },
+          "schema": { "type": "string" },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "type", "nullable", "isPrimaryKey", "isForeignKey"],
+              "properties": {
+                "name": { "type": "string" },
+                "type": { "type": "string" },
+                "nullable": { "type": "boolean" },
+                "default": { "type": ["string", "null"] },
+                "isPrimaryKey": { "type": "boolean" },
+                "isForeignKey": { "type": "boolean" },
+                "fkRef": {
+                  "type": ["object", "null"],
+                  "properties": {
+                    "table": { "type": "string" },
+                    "column": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "primaryKey": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "indexes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "columns", "isUnique"],
+              "properties": {
+                "name": { "type": "string" },
+                "columns": { "type": "array", "items": { "type": "string" } },
+                "isUnique": { "type": "boolean" }
+              }
+            }
+          },
+          "constraints": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "type", "columns"],
+              "properties": {
+                "name": { "type": "string" },
+                "type": {
+                  "type": "string",
+                  "enum": ["PRIMARY KEY", "FOREIGN KEY", "UNIQUE", "CHECK"]
+                },
+                "columns": { "type": "array", "items": { "type": "string" } },
+                "definition": { "type": ["string", "null"] }
+              }
+            }
+          }
+        }
+      }
+    },
+    "relationships": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["fromTable", "fromColumn", "toTable", "toColumn", "constraintName"],
+        "properties": {
+          "fromTable": { "type": "string" },
+          "fromColumn": { "type": "string" },
+          "toTable": { "type": "string" },
+          "toColumn": { "type": "string" },
+          "constraintName": { "type": "string" }
+        }
+      }
+    }
+  }
+}

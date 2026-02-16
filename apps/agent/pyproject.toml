@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "schemaingest"
+version = "0.1.0"
+description = "Local agent for SchemaIngest — introspect Postgres schemas safely."
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "Jineth Bosilu"}
+]
+dependencies = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "psycopg2-binary>=2.9.9",
+    "pydantic>=2.5.0",
+    "click>=8.1.0",
+]
+
+[project.scripts]
+schemaingest = "schemaingest.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["schemaingest*"]
