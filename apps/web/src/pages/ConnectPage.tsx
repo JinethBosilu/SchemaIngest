@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import type { ConnectFields, SchemaPack } from '../types/schemaPack';
+import { useNavigate } from 'react-router-dom';
+import type { ConnectFields } from '../types/schemaPack';
+import { useAppStore } from '../store';
 import { introspect } from '../api/agentClient';
 
-interface ConnectPageProps {
-    onIntrospected: (pack: SchemaPack, fields: ConnectFields) => void;
-}
-
-export default function ConnectPage({ onIntrospected }: ConnectPageProps) {
+export default function ConnectPage() {
+    const navigate = useNavigate();
+    const { setSchemaPack, setConnFields } = useAppStore();
     const [mode, setMode] = useState<'string' | 'fields'>('string');
     const [connString, setConnString] = useState('');
     const [host, setHost] = useState('localhost');
@@ -27,7 +27,9 @@ export default function ConnectPage({ onIntrospected }: ConnectPageProps) {
 
         try {
             const pack = await introspect(fields);
-            onIntrospected(pack, fields);
+            setSchemaPack(pack);
+            setConnFields(fields);
+            navigate('/schema');
         } catch (e: any) {
             setError(e.message || 'Introspection failed');
         } finally {

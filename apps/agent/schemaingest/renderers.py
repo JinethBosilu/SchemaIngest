@@ -77,7 +77,10 @@ def render_erd_mermaid(pack: SchemaPack) -> str:
             if c.isForeignKey:
                 markers.append("FK")
             marker_str = f' "{",".join(markers)}"' if markers else ""
-            lines.append(f"        {c.type} {c.name}{marker_str}")
+            # Mermaid doesn't allow spaces or special chars in types for ERDs.
+            safe_type = c.type.replace(" ", "_").replace("(", "_").replace(")", "")
+            safe_name = c.name.replace(" ", "_")
+            lines.append(f"        {safe_type} {safe_name}{marker_str}")
         lines.append("    }")
 
     # Relationships
