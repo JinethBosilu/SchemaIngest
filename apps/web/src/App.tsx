@@ -1,24 +1,18 @@
-import { useState } from 'react';
+import { HashRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import PairPage from './pages/PairPage';
 import ConnectPage from './pages/ConnectPage';
 import SchemaPage from './pages/SchemaPage';
-import type { SchemaPack, ConnectFields } from './types/schemaPack';
-import { clearSession, getSessionToken } from './api/agentClient';
+import { clearSession } from './api/agentClient';
+import { useAppStore } from './store';
 
-type Page = 'pair' | 'connect' | 'schema';
-
-export default function App() {
-    const [page, setPage] = useState<Page>('pair');
-    const [schemaPack, setSchemaPack] = useState<SchemaPack | null>(null);
-    const [connFields, setConnFields] = useState<ConnectFields | null>(null);
-
-    const isPaired = page !== 'pair';
+function AppContent() {
+    const { isPaired, schemaPack, connFields, clearSessionData } = useAppStore();
+    const navigate = useNavigate();
 
     const handleDisconnect = () => {
         clearSession();
-        setSchemaPack(null);
-        setConnFields(null);
-        setPage('pair');
+        clearSessionData();
+        navigate('/');
     };
 
     return (
@@ -37,22 +31,26 @@ export default function App() {
             </header>
 
             <main className="app-main">
-                {page === 'pair' && (
-                    <PairPage onPaired={() => setPage('connect')} />
-                )}
-
-                {page === 'connect' && (
-                    <ConnectPage onIntrospected={(pack, fields) => {
-                        setSchemaPack(pack);
-                        setConnFields(fields);
-                        setPage('schema');
-                    }} />
-                )}
-
-                {page === 'schema' && schemaPack && connFields && (
-                    <SchemaPage pack={schemaPack} connFields={connFields} />
-                )}
+                <Routes>
+                    <Route path="/" element={<PairPage />} />
+                    <Route 
+                        path="/connect" 
+                        element={isPaired ? <ConnectPage /> : <Navigate to="/" replace />} 
+                    />
+                    <Route 
+                        path="/schema" 
+                        element={isPaired && schemaPack && connFields ? <SchemaPage /> : <Navigate to="/" replace />} 
+                    />
+                </Routes>
             </main>
         </div>
+    );
+}
+
+export default function App() {
+    return (
+        <HashRouter>
+            <AppContent />
+        </HashRouter>
     );
 }

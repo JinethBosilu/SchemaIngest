@@ -507,18 +507,121 @@ body {
   border-bottom-color: var(--accent);
 }
 
-/* ─── ERD Container ──────────────────────────────────────── */
-.erd-container {
+/* ─── ERD Viewer ─────────────────────────────────────────── */
+.erd-viewer {
+  position: relative;
+  width: 100%;
+  min-height: calc(100vh - 250px);
+  overflow: hidden;
   background: var(--bg-input);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+}
+
+.erd-viewer.erd-fullscreen {
+  border-radius: 0;
+  border: none;
+  background: var(--bg-primary);
+}
+
+.erd-container {
+  background: transparent;
   padding: 24px;
-  overflow: auto;
   min-height: 300px;
 }
 
 .erd-container svg {
   max-width: 100%;
+}
+
+/* ─── ERD Toolbar ────────────────────────────────────────── */
+.erd-toolbar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  background: rgba(28, 31, 46, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.erd-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.erd-toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 4px;
+}
+
+.erd-tool-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.erd-tool-btn:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+.erd-tool-btn:active {
+  transform: scale(0.92);
+}
+
+.erd-zoom-level {
+  min-width: 44px;
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  color: var(--accent-hover);
+  padding: 4px 6px;
+  border-radius: 4px;
+  background: rgba(99, 102, 241, 0.1);
+  user-select: none;
+}
+
+/* ─── ERD Hints ──────────────────────────────────────────── */
+.erd-hints {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  background: rgba(28, 31, 46, 0.75);
+  backdrop-filter: blur(8px);
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  pointer-events: none;
+  white-space: nowrap;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.erd-viewer:hover .erd-hints {
+  opacity: 1;
 }
 
 /* ─── Copy Button ────────────────────────────────────────── */

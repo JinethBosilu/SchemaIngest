@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { detectAgent, pair } from '../api/agentClient';
+import { useAppStore } from '../store';
 
-interface PairPageProps {
-    onPaired: () => void;
-}
-
-export default function PairPage({ onPaired }: PairPageProps) {
+export default function PairPage() {
+    const navigate = useNavigate();
+    const { setIsPaired } = useAppStore();
     const [agentStatus, setAgentStatus] = useState<'detecting' | 'found' | 'not-found'>('detecting');
     const [agentVersion, setAgentVersion] = useState('');
     const [code, setCode] = useState('');
@@ -39,7 +39,8 @@ export default function PairPage({ onPaired }: PairPageProps) {
         setError('');
         try {
             await pair(code);
-            onPaired();
+            setIsPaired(true);
+            navigate('/connect');
         } catch (e: any) {
             setError(e.message || 'Pairing failed');
         } finally {

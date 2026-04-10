@@ -1,19 +1,20 @@
 import { useState } from 'react';
-import type { SchemaPack, ConnectFields } from '../types/schemaPack';
 import TableList from '../components/TableList';
 import TableDetail from '../components/TableDetail';
 import ErdDiagram from '../components/ErdDiagram';
 import CopyButton from '../components/CopyButton';
 import { getSchemaText, getErdMermaid } from '../api/agentClient';
-
-interface SchemaPageProps {
-    pack: SchemaPack;
-    connFields: ConnectFields;
-}
+import { useAppStore } from '../store';
 
 type Tab = 'columns' | 'erd';
 
-export default function SchemaPage({ pack, connFields }: SchemaPageProps) {
+export default function SchemaPage() {
+    const { schemaPack: pack, connFields } = useAppStore();
+    
+    // We shouldn't render this page unless pack is available (guarded by Route),
+    // but TypeScript needs to know it's not null here.
+    if (!pack || !connFields) return null;
+
     const [selectedTable, setSelectedTable] = useState(pack.tables[0]?.name ?? '');
     const [tab, setTab] = useState<Tab>('columns');
     const [schemaText, setSchemaText] = useState<string | null>(null);
@@ -42,8 +43,8 @@ export default function SchemaPage({ pack, connFields }: SchemaPageProps) {
             const text = await getErdMermaid(connFields);
             setMermaidText(text);
             return text;
-        } catch {
-            return null;
+        } catch (e: any) {
+            throw e;
         }
     };
 

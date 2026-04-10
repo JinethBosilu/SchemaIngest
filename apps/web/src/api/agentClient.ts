@@ -9,7 +9,7 @@ import type { SchemaPack, ConnectFields } from '../types/schemaPack';
 
 const AGENT_BASE = 'http://127.0.0.1:8420';
 
-let _sessionToken: string | null = null;
+let _sessionToken: string | null = sessionStorage.getItem('agentSessionToken');
 
 // ─── Helpers ─────────────────────────────────────────────
 
@@ -37,6 +37,7 @@ export function getSessionToken(): string | null {
 
 export function clearSession(): void {
     _sessionToken = null;
+    sessionStorage.removeItem('agentSessionToken');
 }
 
 /**
@@ -59,6 +60,7 @@ export async function pair(code: string): Promise<string> {
     });
     const data = await handleResponse<{ sessionToken: string }>(res);
     _sessionToken = data.sessionToken;
+    sessionStorage.setItem('agentSessionToken', data.sessionToken);
     return data.sessionToken;
 }
 
