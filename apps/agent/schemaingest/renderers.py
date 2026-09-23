@@ -2,7 +2,18 @@
 
 from __future__ import annotations
 
+import re
+
 from schemaingest.models import SchemaPack
+
+_MERMAID_UNSAFE = re.compile(r"[^A-Za-z0-9_]")
+
+
+def _mermaid_ident(text: str) -> str:
+    """Mermaid ERD identifiers allow only word characters, and must not start
+    with a digit - `character varying(255)` and `_int4[]` both break it."""
+    ident = _MERMAID_UNSAFE.sub("_", text).strip("_") or "_"
+    return ident if ident[0].isalpha() else "t" + ident
 
 
 def render_schema_txt(pack: SchemaPack) -> str:
@@ -69,22 +80,24 @@ def render_erd_mermaid(pack: SchemaPack) -> str:
     lines: list[str] = ["erDiagram"]
 
     for t in pack.tables:
-        lines.append(f"    {t.name} {{")
+        lines.append(f"    {_mermaid_ident(t.name)} {{")
         for c in t.columns:
             markers = []
             if c.isPrimaryKey:
                 markers.append("PK")
             if c.isForeignKey:
                 markers.append("FK")
-            marker_str = f' "{",".join(markers)}"' if markers else ""
-            # Mermaid doesn't allow spaces or special chars in types for ERDs.
-            safe_type = c.type.replace(" ", "_").replace("(", "_").replace(")", "")
-            safe_name = c.name.replace(" ", "_")
-            lines.append(f"        {safe_type} {safe_name}{marker_str}")
+            marker_str = " " + ", ".join(markers) if markers else ""
+            lines.append(f"        {_mermaid_ident(c.type)} {_mermaid_ident(c.name)}{marker_str}")
         lines.append("    }")
 
-    # Relationships
+    # Relationships - one line per foreign key, not per column of a composite one.
+    seen: set[tuple[str, str]] = set()
     for r in pack.relationships:
-        lines.append(f"    {r.toTable} ||--o{{ {r.fromTable} : \"{r.constraintName}\"")
+        if (r.fromTable, r.constraintName) in seen:
+            continue
+        seen.add((r.fromTable, r.constraintName))
+        label = r.constraintName.replace('"', "'")
+        lines.append(f'    {_mermaid_ident(r.toTable)} ||--o{{ {_mermaid_ident(r.fromTable)} : "{label}"')
 
     return "\n".join(lines)

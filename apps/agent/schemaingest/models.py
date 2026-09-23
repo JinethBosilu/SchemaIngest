@@ -93,19 +93,21 @@ class ConnectRequest(BaseModel):
     dbname: Optional[str] = None
     user: Optional[str] = None
     password: Optional[str] = None
+    schema_: str = Field(default="public", alias="schema")
+
+    model_config = {"populate_by_name": True}
 
     def to_dsn(self) -> str:
         if self.connectionString:
             return self.connectionString
-        parts = []
-        if self.host:
-            parts.append(f"host={self.host}")
-        if self.port:
-            parts.append(f"port={self.port}")
-        if self.dbname:
-            parts.append(f"dbname={self.dbname}")
-        if self.user:
-            parts.append(f"user={self.user}")
-        if self.password:
-            parts.append(f"password={self.password}")
-        return " ".join(parts)
+        # make_dsn quotes values, so a password with spaces or quotes survives.
+        from psycopg2.extensions import make_dsn
+
+        fields = {
+            "host": self.host,
+            "port": self.port,
+            "dbname": self.dbname,
+            "user": self.user,
+            "password": self.password,
+        }
+        return make_dsn(**{k: v for k, v in fields.items() if v})
