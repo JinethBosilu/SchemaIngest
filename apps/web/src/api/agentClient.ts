@@ -21,10 +21,15 @@ function authHeaders(): Record<string, string> {
     return headers;
 }
 
+/** The agent no longer knows our token - it was restarted, or the session expired. */
+export class SessionExpiredError extends Error {}
+
 async function handleResponse<T>(res: Response): Promise<T> {
     if (!res.ok) {
         const body = await res.json().catch(() => ({ detail: res.statusText }));
-        throw new Error(body.detail || `HTTP ${res.status}`);
+        const message = body.detail || `HTTP ${res.status}`;
+        if (res.status === 401) throw new SessionExpiredError(message);
+        throw new Error(message);
     }
     return res.json();
 }
@@ -74,30 +79,4 @@ export async function introspect(fields: ConnectFields): Promise<SchemaPack> {
         body: JSON.stringify(fields),
     });
     return handleResponse<SchemaPack>(res);
-}
-
-/**
- * Get AI-friendly schema text.
- */
-export async function getSchemaText(fields: ConnectFields): Promise<string> {
-    const res = await fetch(`${AGENT_BASE}/render/schema.txt`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify(fields),
-    });
-    const data = await handleResponse<{ text: string }>(res);
-    return data.text;
-}
-
-/**
- * Get Mermaid ERD diagram text.
- */
-export async function getErdMermaid(fields: ConnectFields): Promise<string> {
-    const res = await fetch(`${AGENT_BASE}/render/erd.mmd`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify(fields),
-    });
-    const data = await handleResponse<{ mermaid: string }>(res);
-    return data.mermaid;
 }

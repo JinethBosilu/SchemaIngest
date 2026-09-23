@@ -1,16 +1,33 @@
 [build-system]
-requires = ["setuptools>=68.0", "wheel"]
+requires = ["setuptools>=77.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "schemaingest"
-version = "0.1.0"
-description = "Local agent for SchemaIngest — introspect Postgres schemas safely."
+dynamic = ["version"]
+description = "Introspect your Postgres schema through a web UI, without credentials leaving your machine."
 readme = "README.md"
-requires-python = ">=3.11"
-license = {text = "MIT"}
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     {name = "Jineth Bosilu"}
+]
+keywords = ["postgres", "postgresql", "schema", "introspection", "erd", "database", "llm"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Database",
+    "Topic :: Software Development :: Documentation",
 ]
 dependencies = [
     "fastapi>=0.104.0",
@@ -20,9 +37,27 @@ dependencies = [
     "click>=8.1.0",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "httpx>=0.27",   # test client for older Starlette
+    "httpx2>=2.0",   # test client for Starlette 1.x
+]
+
+[project.urls]
+Homepage = "https://github.com/JinethBosilu/SchemaIngest"
+"Web UI" = "https://jinethbosilu.github.io/SchemaIngest/"
+Issues = "https://github.com/JinethBosilu/SchemaIngest/issues"
+
 [project.scripts]
 schemaingest = "schemaingest.cli:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "schemaingest.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["schemaingest*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

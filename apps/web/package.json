@@ -9,15 +9,19 @@
         "preview": "vite preview"
     },
     "dependencies": {
+        "d3-selection": "^3.0.0",
+        "d3-transition": "^3.0.1",
+        "d3-zoom": "^3.0.0",
         "lucide-react": "^1.7.0",
-        "mermaid": "^11.4.0",
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
         "react-router-dom": "^7.14.0",
-        "react-zoom-pan-pinch": "^3.7.0",
         "zustand": "^5.0.12"
     },
     "devDependencies": {
+        "@types/d3-selection": "^3.0.12",
+        "@types/d3-transition": "^3.0.9",
+        "@types/d3-zoom": "^3.0.8",
         "@types/react": "^18.3.12",
         "@types/react-dom": "^18.3.1",
         "@vitejs/plugin-react": "^4.3.4",

@@ -34,7 +34,9 @@ def generate_pairing_code() -> str:
 
 def verify_pairing_code(code: str) -> Optional[str]:
     """Verify pairing code. Returns session token on success, None on failure."""
-    if not secrets.compare_digest(code.strip(), _pairing_code):
+    # With no code set (agent not started through the CLI) nothing may pair;
+    # compare_digest("", "") would otherwise succeed.
+    if not _pairing_code or not secrets.compare_digest(code.strip(), _pairing_code):
         return None
     token = uuid.uuid4().hex
     _sessions[token] = time.time() + _SESSION_TTL

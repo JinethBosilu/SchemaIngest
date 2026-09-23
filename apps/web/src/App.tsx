@@ -6,7 +6,7 @@ import { clearSession } from './api/agentClient';
 import { useAppStore } from './store';
 
 function AppContent() {
-    const { isPaired, schemaPack, connFields, clearSessionData } = useAppStore();
+    const { isPaired, schemaPack, clearSessionData } = useAppStore();
     const navigate = useNavigate();
 
     const handleDisconnect = () => {
@@ -39,7 +39,7 @@ function AppContent() {
                     />
                     <Route 
                         path="/schema" 
-                        element={isPaired && schemaPack && connFields ? <SchemaPage /> : <Navigate to="/" replace />} 
+                        element={isPaired && schemaPack ? <SchemaPage /> : <Navigate to="/" replace />} 
                     />
                 </Routes>
             </main>

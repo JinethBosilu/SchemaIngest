@@ -43,61 +43,83 @@ WHERE c.table_schema = %s AND c.table_name = %s
 ORDER BY c.ordinal_position;
 """
 
+# Keys, constraints and indexes come from pg_catalog rather than
+# information_schema: constraint_column_usage only shows columns of tables the
+# current role owns, and it cannot pair up the columns of a composite key.
+
 _PK_SQL = """
-SELECT kcu.column_name
-FROM information_schema.table_constraints tc
-JOIN information_schema.key_column_usage kcu
-    ON tc.constraint_name = kcu.constraint_name
-    AND tc.table_schema = kcu.table_schema
-WHERE tc.table_schema = %s
-    AND tc.table_name = %s
-    AND tc.constraint_type = 'PRIMARY KEY'
-ORDER BY kcu.ordinal_position;
+SELECT a.attname AS column_name
+FROM pg_constraint con
+JOIN pg_class t ON t.oid = con.conrelid
+JOIN pg_namespace n ON n.oid = t.relnamespace
+CROSS JOIN LATERAL unnest(con.conkey) WITH ORDINALITY AS k(attnum, ord)
+JOIN pg_attribute a ON a.attrelid = con.conrelid AND a.attnum = k.attnum
+WHERE n.nspname = %s AND t.relname = %s AND con.contype = 'p'
+ORDER BY k.ord;
 """
 
 _FK_SQL = """
 SELECT
-    kcu.column_name       AS from_column,
-    ccu.table_name        AS to_table,
-    ccu.column_name       AS to_column,
-    tc.constraint_name
-FROM information_schema.table_constraints tc
-JOIN information_schema.key_column_usage kcu
-    ON tc.constraint_name = kcu.constraint_name
-    AND tc.table_schema = kcu.table_schema
-JOIN information_schema.constraint_column_usage ccu
-    ON tc.constraint_name = ccu.constraint_name
-    AND tc.table_schema = ccu.table_schema
-WHERE tc.table_schema = %s
-    AND tc.table_name = %s
-    AND tc.constraint_type = 'FOREIGN KEY';
+    a.attname   AS from_column,
+    ft.relname  AS to_table,
+    fa.attname  AS to_column,
+    con.conname AS constraint_name
+FROM pg_constraint con
+JOIN pg_class t ON t.oid = con.conrelid
+JOIN pg_namespace n ON n.oid = t.relnamespace
+JOIN pg_class ft ON ft.oid = con.confrelid
+CROSS JOIN LATERAL unnest(con.conkey, con.confkey) WITH ORDINALITY AS k(attnum, fattnum, ord)
+JOIN pg_attribute a ON a.attrelid = con.conrelid AND a.attnum = k.attnum
+JOIN pg_attribute fa ON fa.attrelid = con.confrelid AND fa.attnum = k.fattnum
+WHERE n.nspname = %s AND t.relname = %s AND con.contype = 'f'
+ORDER BY con.conname, k.ord;
 """
 
+# NOT NULL is reported per column, so only real constraints are listed here.
 _CONSTRAINTS_SQL = """
 SELECT
-    tc.constraint_name,
-    tc.constraint_type,
-    kcu.column_name,
-    cc.check_clause
-FROM information_schema.table_constraints tc
-LEFT JOIN information_schema.key_column_usage kcu
-    ON tc.constraint_name = kcu.constraint_name
-    AND tc.table_schema = kcu.table_schema
-LEFT JOIN information_schema.check_constraints cc
-    ON tc.constraint_name = cc.constraint_name
-    AND tc.constraint_schema = cc.constraint_schema
-WHERE tc.table_schema = %s
-    AND tc.table_name = %s
-ORDER BY tc.constraint_name, kcu.ordinal_position;
+    con.conname AS constraint_name,
+    CASE con.contype
+        WHEN 'p' THEN 'PRIMARY KEY'
+        WHEN 'f' THEN 'FOREIGN KEY'
+        WHEN 'u' THEN 'UNIQUE'
+        WHEN 'c' THEN 'CHECK'
+    END AS constraint_type,
+    COALESCE(
+        ARRAY(
+            SELECT a.attname::text
+            FROM unnest(con.conkey) WITH ORDINALITY AS k(attnum, ord)
+            JOIN pg_attribute a ON a.attrelid = con.conrelid AND a.attnum = k.attnum
+            ORDER BY k.ord
+        ),
+        ARRAY[]::text[]
+    ) AS columns,
+    CASE WHEN con.contype = 'c' THEN pg_get_constraintdef(con.oid, true) END AS definition
+FROM pg_constraint con
+JOIN pg_class t ON t.oid = con.conrelid
+JOIN pg_namespace n ON n.oid = t.relnamespace
+WHERE n.nspname = %s AND t.relname = %s AND con.contype IN ('p', 'f', 'u', 'c')
+ORDER BY con.conname;
 """
 
+# One entry per key column, as Postgres itself prints it - a plain column name,
+# or the expression for an expression index. INCLUDE columns and a partial
+# index's WHERE clause are not key columns and are left out.
 _INDEXES_SQL = """
 SELECT
-    indexname,
-    indexdef
-FROM pg_indexes
-WHERE schemaname = %s AND tablename = %s
-ORDER BY indexname;
+    i.relname AS indexname,
+    ix.indisunique AS is_unique,
+    ARRAY(
+        SELECT pg_get_indexdef(ix.indexrelid, g, true)
+        FROM generate_series(1, ix.indnkeyatts) AS g
+        ORDER BY g
+    ) AS columns
+FROM pg_index ix
+JOIN pg_class i ON i.oid = ix.indexrelid
+JOIN pg_class t ON t.oid = ix.indrelid
+JOIN pg_namespace n ON n.oid = t.relnamespace
+WHERE n.nspname = %s AND t.relname = %s
+ORDER BY i.relname;
 """
 
 _DB_VERSION_SQL = "SELECT version();"
@@ -115,24 +137,76 @@ def _column_type_display(row: dict) -> str:
     if data_type == "USER-DEFINED":
         return udt
     if data_type == "ARRAY":
-        return f"{udt}[]"
+        # The udt of an array is the element type with a leading underscore.
+        return f"{udt[1:] if udt.startswith('_') else udt}[]"
     if max_len:
         return f"{data_type}({max_len})"
     return data_type
 
 
-def _parse_index_unique(indexdef: str) -> bool:
-    return "UNIQUE" in indexdef.upper().split("INDEX")[0] if "INDEX" in indexdef.upper() else False
+def _introspect_table(cur, schema: str, tname: str) -> tuple[TableInfo, list[Relationship]]:
+    cur.execute(_COLUMNS_SQL, (schema, tname))
+    raw_columns = cur.fetchall()
 
+    cur.execute(_PK_SQL, (schema, tname))
+    pk_cols = [r["column_name"] for r in cur.fetchall()]
 
-def _parse_index_columns(indexdef: str) -> list[str]:
-    """Extract column names from CREATE INDEX ... (col1, col2)."""
-    start = indexdef.rfind("(")
-    end = indexdef.rfind(")")
-    if start == -1 or end == -1:
-        return []
-    inner = indexdef[start + 1:end]
-    return [c.strip().split()[0] for c in inner.split(",")]
+    cur.execute(_FK_SQL, (schema, tname))
+    relationships: list[Relationship] = []
+    fk_map: dict[str, FkRef] = {}
+    for fk in cur.fetchall():
+        # A column in two foreign keys keeps its first target for fkRef; every
+        # pairing is still listed in relationships.
+        fk_map.setdefault(fk["from_column"], FkRef(table=fk["to_table"], column=fk["to_column"]))
+        relationships.append(
+            Relationship(
+                fromTable=tname,
+                fromColumn=fk["from_column"],
+                toTable=fk["to_table"],
+                toColumn=fk["to_column"],
+                constraintName=fk["constraint_name"],
+            )
+        )
+
+    columns = [
+        ColumnInfo(
+            name=rc["column_name"],
+            type=_column_type_display(rc),
+            nullable=rc["is_nullable"] == "YES",
+            default=rc["column_default"],
+            isPrimaryKey=rc["column_name"] in pk_cols,
+            isForeignKey=rc["column_name"] in fk_map,
+            fkRef=fk_map.get(rc["column_name"]),
+        )
+        for rc in raw_columns
+    ]
+
+    cur.execute(_CONSTRAINTS_SQL, (schema, tname))
+    constraints = [
+        ConstraintInfo(
+            name=rc["constraint_name"],
+            type=rc["constraint_type"],
+            columns=list(rc["columns"]),
+            definition=rc["definition"],
+        )
+        for rc in cur.fetchall()
+    ]
+
+    cur.execute(_INDEXES_SQL, (schema, tname))
+    indexes = [
+        IndexInfo(name=ix["indexname"], columns=list(ix["columns"]), isUnique=ix["is_unique"])
+        for ix in cur.fetchall()
+    ]
+
+    table = TableInfo(
+        name=tname,
+        schema=schema,
+        columns=columns,
+        primaryKey=pk_cols,
+        indexes=indexes,
+        constraints=constraints,
+    )
+    return table, relationships
 
 
 def introspect_postgres(dsn: str, schema: str = "public") -> SchemaPack:
@@ -146,104 +220,24 @@ def introspect_postgres(dsn: str, schema: str = "public") -> SchemaPack:
         A populated SchemaPack model.
     """
     conn = psycopg2.connect(dsn)
-    conn.set_session(readonly=True, autocommit=True)
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    try:
+        conn.set_session(readonly=True, autocommit=True)
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(_DB_VERSION_SQL)
+            db_version = cur.fetchone()["version"]
+            db_name = conn.info.dbname
 
-    # DB version
-    cur.execute(_DB_VERSION_SQL)
-    db_version = cur.fetchone()["version"]
+            cur.execute(_TABLES_SQL, (schema,))
+            table_names = [r["table_name"] for r in cur.fetchall()]
 
-    # Database name from connection
-    db_name = conn.info.dbname
-
-    # Tables
-    cur.execute(_TABLES_SQL, (schema,))
-    table_names = [r["table_name"] for r in cur.fetchall()]
-
-    tables: list[TableInfo] = []
-    all_relationships: list[Relationship] = []
-
-    for tname in table_names:
-        # Columns
-        cur.execute(_COLUMNS_SQL, (schema, tname))
-        raw_columns = cur.fetchall()
-
-        # Primary keys
-        cur.execute(_PK_SQL, (schema, tname))
-        pk_cols = {r["column_name"] for r in cur.fetchall()}
-
-        # Foreign keys
-        cur.execute(_FK_SQL, (schema, tname))
-        fk_rows = cur.fetchall()
-        fk_map: dict[str, FkRef] = {}
-        for fk in fk_rows:
-            fk_map[fk["from_column"]] = FkRef(table=fk["to_table"], column=fk["to_column"])
-            all_relationships.append(
-                Relationship(
-                    fromTable=tname,
-                    fromColumn=fk["from_column"],
-                    toTable=fk["to_table"],
-                    toColumn=fk["to_column"],
-                    constraintName=fk["constraint_name"],
-                )
-            )
-
-        columns = []
-        for rc in raw_columns:
-            col_name = rc["column_name"]
-            columns.append(
-                ColumnInfo(
-                    name=col_name,
-                    type=_column_type_display(rc),
-                    nullable=rc["is_nullable"] == "YES",
-                    default=rc["column_default"],
-                    isPrimaryKey=col_name in pk_cols,
-                    isForeignKey=col_name in fk_map,
-                    fkRef=fk_map.get(col_name),
-                )
-            )
-
-        # Constraints
-        cur.execute(_CONSTRAINTS_SQL, (schema, tname))
-        raw_constraints = cur.fetchall()
-        constraint_map: dict[str, ConstraintInfo] = {}
-        for rc in raw_constraints:
-            cname = rc["constraint_name"]
-            if cname not in constraint_map:
-                constraint_map[cname] = ConstraintInfo(
-                    name=cname,
-                    type=rc["constraint_type"],
-                    columns=[],
-                    definition=rc.get("check_clause"),
-                )
-            if rc.get("column_name") and rc["column_name"] not in constraint_map[cname].columns:
-                constraint_map[cname].columns.append(rc["column_name"])
-
-        # Indexes
-        cur.execute(_INDEXES_SQL, (schema, tname))
-        indexes = []
-        for ix in cur.fetchall():
-            indexes.append(
-                IndexInfo(
-                    name=ix["indexname"],
-                    columns=_parse_index_columns(ix["indexdef"]),
-                    isUnique=_parse_index_unique(ix["indexdef"]),
-                )
-            )
-
-        tables.append(
-            TableInfo(
-                name=tname,
-                schema=schema,
-                columns=columns,
-                primaryKey=list(pk_cols),
-                indexes=indexes,
-                constraints=list(constraint_map.values()),
-            )
-        )
-
-    cur.close()
-    conn.close()
+            tables: list[TableInfo] = []
+            all_relationships: list[Relationship] = []
+            for tname in table_names:
+                table, relationships = _introspect_table(cur, schema, tname)
+                tables.append(table)
+                all_relationships.extend(relationships)
+    finally:
+        conn.close()
 
     meta = DbMeta(
         dbName=db_name,
