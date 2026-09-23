@@ -66,4 +66,5 @@ export interface ConnectFields {
     dbname?: string;
     user?: string;
     password?: string;
+    schema?: string;
 }

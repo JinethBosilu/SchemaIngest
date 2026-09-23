@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { ConnectFields } from '../types/schemaPack';
 import { useAppStore } from '../store';
-import { introspect } from '../api/agentClient';
+import { clearSession, introspect, SessionExpiredError } from '../api/agentClient';
 
 export default function ConnectPage() {
     const navigate = useNavigate();
-    const { setSchemaPack, setConnFields } = useAppStore();
+    const { setSchemaPack, clearSessionData } = useAppStore();
     const [mode, setMode] = useState<'string' | 'fields'>('string');
     const [connString, setConnString] = useState('');
     const [host, setHost] = useState('localhost');
@@ -14,6 +14,7 @@ export default function ConnectPage() {
     const [dbname, setDbname] = useState('');
     const [user, setUser] = useState('');
     const [password, setPassword] = useState('');
+    const [schema, setSchema] = useState('public');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -24,13 +25,20 @@ export default function ConnectPage() {
         const fields: ConnectFields = mode === 'string'
             ? { connectionString: connString }
             : { host, port: parseInt(port) || 5432, dbname, user, password };
+        fields.schema = schema.trim() || 'public';
 
         try {
             const pack = await introspect(fields);
             setSchemaPack(pack);
-            setConnFields(fields);
             navigate('/schema');
         } catch (e: any) {
+            if (e instanceof SessionExpiredError) {
+                // The agent was restarted and has a new pairing code.
+                clearSession();
+                clearSessionData();
+                navigate('/');
+                return;
+            }
             setError(e.message || 'Introspection failed');
         } finally {
             setLoading(false);
@@ -108,6 +116,17 @@ export default function ConnectPage() {
                         </div>
                     </>
                 )}
+
+                <div className="form-group">
+                    <label>Schema</label>
+                    <input
+                        className="form-input mono"
+                        placeholder="public"
+                        value={schema}
+                        onChange={e => setSchema(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && canSubmit && handleSubmit()}
+                    />
+                </div>
 
                 {error && <div className="error-msg" style={{ marginBottom: 12 }}>{error}</div>}
 

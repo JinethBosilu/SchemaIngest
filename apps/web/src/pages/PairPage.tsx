@@ -12,26 +12,25 @@ export default function PairPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
+    // Look for the agent now, then every 3s until it answers.
     useEffect(() => {
         let cancelled = false;
+        let timer: number | undefined;
         const check = async () => {
             try {
                 const data = await detectAgent();
-                if (!cancelled) {
-                    setAgentStatus('found');
-                    setAgentVersion(data.version);
-                }
+                if (cancelled) return;
+                setAgentStatus('found');
+                setAgentVersion(data.version);
             } catch {
-                if (!cancelled) setAgentStatus('not-found');
+                if (cancelled) return;
+                setAgentStatus('not-found');
+                timer = window.setTimeout(check, 3000);
             }
         };
         check();
-        // Retry every 3s while not found
-        const iv = setInterval(() => {
-            if (agentStatus === 'not-found' || agentStatus === 'detecting') check();
-        }, 3000);
-        return () => { cancelled = true; clearInterval(iv); };
-    }, [agentStatus]);
+        return () => { cancelled = true; window.clearTimeout(timer); };
+    }, []);
 
     const handlePair = async () => {
         if (code.length !== 6) return;
@@ -68,9 +67,17 @@ export default function PairPage() {
                     </div>
                 )}
                 {agentStatus === 'not-found' && (
-                    <div className="pair-status error">
-                        ❌ Agent not found. Make sure it's running on localhost:8420.
-                    </div>
+                    <>
+                        <div className="pair-status error">
+                            ❌ Agent not found. Make sure it's running on localhost:8420.
+                        </div>
+                        <p className="pair-hint">
+                            Running but still not found? The browser may be blocking this page from
+                            reaching <code>127.0.0.1</code>. In Chrome or Edge, allow <b>local network
+                            access</b> for this site (the icon left of the address bar). Safari may block an
+                            HTTPS page from calling a local agent at all; if so, use Chrome, Edge or Firefox.
+                        </p>
+                    </>
                 )}
                 {agentStatus === 'found' && (
                     <>

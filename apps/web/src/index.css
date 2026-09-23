@@ -341,6 +341,11 @@ body {
 }
 
 /* ─── Schema Page ────────────────────────────────────────── */
+/* The diagram wants the width; the forms do not. */
+.app-main:has(.schema-page) {
+  max-width: 1680px;
+}
+
 .schema-page {
   display: grid;
   grid-template-columns: 280px 1fr;
@@ -397,6 +402,7 @@ body {
 
 /* ─── Table Detail ───────────────────────────────────────── */
 .detail-panel {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -507,121 +513,236 @@ body {
   border-bottom-color: var(--accent);
 }
 
-/* ─── ERD Viewer ─────────────────────────────────────────── */
-.erd-viewer {
-  position: relative;
-  width: 100%;
-  min-height: calc(100vh - 250px);
-  overflow: hidden;
-  background: var(--bg-input);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
+/* ─── Diagram (Table / Graph) ────────────────────────────── */
+/* Direction is the one thing the diagram has to say clearly, so it is a colour
+   pair used in both views: blue is "this table points at that one", teal is
+   the other way round, violet is both ways. Ported from the entity mapper. */
+:root {
+  --erd-out: #6aa9f0;
+  --erd-in: #5ac8a8;
+  --erd-both: #a78bda;
+  --erd-near: #5c6474;
+  --erd-out-soft: #9cc6f6;
+  --erd-in-soft: #8fdcc6;
+  --erd-focus-bg: #232a3c;
+  --erd-rim: #6f7d92;
+  --erd-key: #a9dfbd;
 }
 
-.erd-viewer.erd-fullscreen {
-  border-radius: 0;
+.erd {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 230px);
+  min-height: 480px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.erd.erd-fullscreen {
+  height: 100vh;
   border: none;
+  border-radius: 0;
   background: var(--bg-primary);
 }
 
-.erd-container {
-  background: transparent;
-  padding: 24px;
-  min-height: 300px;
-}
-
-.erd-container svg {
-  max-width: 100%;
-}
-
-/* ─── ERD Toolbar ────────────────────────────────────────── */
-.erd-toolbar {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 20;
+.erd-bar {
+  flex: none;
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 6px;
-  background: rgba(28, 31, 46, 0.85);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
 }
 
-.erd-toolbar-group {
+.erd-modes {
   display: flex;
-  align-items: center;
   gap: 2px;
+  padding: 2px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 7px;
 }
 
-.erd-toolbar-divider {
-  width: 1px;
-  height: 20px;
-  background: var(--border);
-  margin: 0 4px;
+.erd-modes button {
+  font: inherit;
+  font-size: 0.75rem;
+  padding: 3px 14px;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
 }
 
-.erd-tool-btn {
+.erd-modes button:hover { color: var(--text-primary); }
+.erd-modes button.on { background: var(--bg-card-hover); color: var(--text-primary); }
+.erd-modes button:focus-visible { outline: 2px solid var(--erd-out); outline-offset: 1px; }
+
+.erd-counts { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
+.erd-counts b { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-primary); font-weight: 600; }
+.erd-counts .o { color: var(--erd-out); }
+.erd-counts .i { color: var(--erd-in); }
+.erd-counts em { font-style: normal; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+
+.erd-legend { display: flex; gap: 13px; flex-wrap: wrap; justify-content: flex-end; margin-left: auto; font-size: 0.68rem; }
+.erd-legend i { display: inline-block; margin-right: 6px; }
+.erd-legend i.bar { width: 15px; height: 2px; border-radius: 1px; vertical-align: 3px; }
+.erd-legend i.dot { width: 8px; height: 8px; border-radius: 50%; vertical-align: 0; }
+.erd-legend .out { background: var(--erd-out); }
+.erd-legend .in { background: var(--erd-in); }
+.erd-legend .both { background: var(--erd-both); }
+.erd-legend .near { background: var(--erd-near); }
+
+.erd-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border: none;
   border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all var(--transition);
 }
 
-.erd-tool-btn:hover {
-  background: var(--bg-card-hover);
-  color: var(--text-primary);
-}
+.erd-btn:hover { background: var(--bg-card-hover); color: var(--text-primary); }
 
-.erd-tool-btn:active {
-  transform: scale(0.92);
-}
+.erd-wrap { position: relative; flex: 1; min-height: 0; }
 
-.erd-zoom-level {
-  min-width: 44px;
-  text-align: center;
-  font-size: 0.7rem;
-  font-weight: 600;
-  font-family: var(--font-mono);
-  color: var(--accent-hover);
-  padding: 4px 6px;
-  border-radius: 4px;
-  background: rgba(99, 102, 241, 0.1);
-  user-select: none;
-}
+.erd-canvas { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+.erd-canvas:active { cursor: grabbing; }
 
-/* ─── ERD Hints ──────────────────────────────────────────── */
-.erd-hints {
+.erd-panel {
   position: absolute;
-  bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 20;
-  font-size: 0.68rem;
-  color: var(--text-muted);
-  background: rgba(28, 31, 46, 0.75);
-  backdrop-filter: blur(8px);
-  padding: 5px 14px;
-  border-radius: 20px;
+  background: rgba(22, 24, 34, 0.93);
   border: 1px solid var(--border);
-  pointer-events: none;
-  white-space: nowrap;
-  opacity: 0.7;
-  transition: opacity 0.3s ease;
+  border-radius: 7px;
+  backdrop-filter: blur(4px);
 }
 
-.erd-viewer:hover .erd-hints {
-  opacity: 1;
+.erd-detail {
+  left: 14px;
+  bottom: 14px;
+  max-width: min(470px, 55%);
+  padding: 9px 12px;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.erd-detail .hd { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-primary); margin-bottom: 2px; word-break: break-word; }
+.erd-detail .who { font-family: var(--font-mono); font-size: 0.64rem; color: var(--text-muted); margin-bottom: 6px; }
+.erd-detail ul { list-style: none; margin: 0; padding: 0; font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-primary); }
+.erd-detail li span { color: var(--text-muted); }
+.erd-detail .leg + .leg { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+
+.erd-zoom { right: 14px; bottom: 14px; display: flex; gap: 2px; padding: 3px; }
+.erd-zoom button {
+  font: inherit;
+  font-size: 0.75rem;
+  min-width: 28px;
+  height: 24px;
+  padding: 0 7px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.erd-zoom button:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+.erd-zoom button:focus-visible { outline: 2px solid var(--erd-out); outline-offset: -1px; }
+
+.erd-canvas .ghint { font-family: var(--font-sans); font-size: 12px; fill: var(--text-secondary); }
+
+/* Table view: record cards */
+.erd-canvas .edge { fill: none; stroke-width: 1.4px; }
+.erd-canvas .edge.out { stroke: var(--erd-out); }
+.erd-canvas .edge.in { stroke: var(--erd-in); }
+.erd-canvas .card { cursor: pointer; outline: none; }
+.erd-canvas .card.dead { cursor: default; }
+.erd-canvas .card rect { fill: var(--bg-card); stroke: var(--border); stroke-width: 1px; }
+.erd-canvas .card.out rect { stroke: #31517a; }
+.erd-canvas .card.in rect { stroke: #2f5a51; }
+.erd-canvas .card:hover rect { fill: var(--bg-card-hover); }
+.erd-canvas .card .nm { font-family: var(--font-mono); font-size: 12.5px; fill: var(--text-primary); }
+.erd-canvas .card .tb { font-family: var(--font-mono); font-size: 10px; fill: var(--text-muted); }
+.erd-canvas .card .jn { font-family: var(--font-mono); font-size: 10.5px; }
+.erd-canvas .card.out .jn { fill: var(--erd-out-soft); }
+.erd-canvas .card.in .jn { fill: var(--erd-in-soft); }
+.erd-canvas .card .chip { font-family: var(--font-sans); font-size: 9px; fill: var(--text-secondary); }
+.erd-canvas .card .rule { stroke: var(--border); }
+.erd-canvas .card:focus-visible rect { stroke: var(--text-primary); stroke-width: 2px; }
+/* The focused table is the one thing on the canvas that is not a link. */
+.erd-canvas .focus { cursor: default; }
+.erd-canvas .focus rect { fill: var(--erd-focus-bg); stroke: #4d5a6e; stroke-width: 1.5px; }
+.erd-canvas .card.focus .nm { font-size: 14px; font-weight: 600; }
+.erd-canvas .focus .fc { font-family: var(--font-mono); font-size: 11px; fill: var(--text-primary); }
+.erd-canvas .focus .fc.key { fill: var(--erd-key); }
+.erd-canvas .focus .fn { font-family: var(--font-mono); font-size: 10px; fill: var(--text-muted); }
+.erd-canvas .focus .kb { font-family: var(--font-sans); font-size: 8px; fill: #7fae90; }
+/* Zoomed far out, the small type is noise: cards drop to names only. */
+.erd-canvas .lod .card .tb,
+.erd-canvas .lod .card .jn,
+.erd-canvas .lod .card .chip,
+.erd-canvas .lod .card .rule { display: none; }
+.erd-canvas .lod .card .nm { font-size: 15px; }
+
+/* Graph view: circles */
+.erd-canvas .spoke, .erd-canvas .chord, .erd-canvas .loop { fill: none; }
+.erd-canvas .spoke { stroke-width: 1.2px; }
+.erd-canvas .spoke.out { stroke: var(--erd-out); }
+.erd-canvas .spoke.in { stroke: var(--erd-in); }
+.erd-canvas .spoke.both { stroke: var(--erd-both); }
+.erd-canvas .loop { stroke: var(--erd-out); stroke-width: 1.2px; }
+.erd-canvas .chord { stroke: var(--erd-near); stroke-width: 1px; }
+.erd-canvas .node { cursor: pointer; outline: none; }
+.erd-canvas .node.dead { cursor: default; }
+.erd-canvas .node circle { stroke: var(--bg-input); stroke-width: 1.5px; }
+.erd-canvas .node.out circle { fill: var(--erd-out); }
+.erd-canvas .node.in circle { fill: var(--erd-in); }
+.erd-canvas .node.both circle { fill: var(--erd-both); }
+.erd-canvas .node .lbl {
+  font-family: var(--font-mono); font-size: 10px; fill: var(--text-primary);
+  pointer-events: none; paint-order: stroke; stroke: var(--bg-input);
+  stroke-width: 3px; stroke-linejoin: round;
+}
+.erd-canvas .node:focus-visible circle { stroke: var(--text-primary); stroke-width: 2.5px; }
+.erd-canvas .node.hub circle { stroke: var(--erd-rim); }
+.erd-canvas .core circle { fill: var(--erd-focus-bg); stroke: var(--erd-rim); stroke-width: 2.5px; }
+.erd-canvas .core .lbl {
+  font-family: var(--font-mono); font-size: 15px; font-weight: 600; fill: #fff;
+  pointer-events: none; paint-order: stroke; stroke: var(--bg-input);
+  stroke-width: 5px; stroke-linejoin: round;
+}
+.erd-canvas .core .halo { fill: var(--bg-input); opacity: 0.82; }
+.erd-canvas .lod .node .lbl { display: none; }
+
+.erd-fullscreen .node circle { stroke: var(--bg-primary); }
+.erd-fullscreen .node .lbl, .erd-fullscreen .core .lbl { stroke: var(--bg-primary); }
+.erd-fullscreen .core .halo { fill: var(--bg-primary); }
+
+@media (prefers-reduced-motion: reduce) {
+  .erd * { transition: none !important; animation: none !important; }
+}
+
+/* ─── Pairing hint ───────────────────────────────────────── */
+.pair-hint {
+  margin-top: 12px;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.pair-hint code {
+  font-family: var(--font-mono);
+  color: var(--info);
 }
 
 /* ─── Copy Button ────────────────────────────────────────── */
