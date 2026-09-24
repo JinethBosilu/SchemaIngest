@@ -20,7 +20,7 @@ from schemaingest.models import ConstraintInfo, IndexInfo, Relationship, SchemaP
 # upper case, MariaDB as written.
 
 _TABLES_SQL = """
-SELECT TABLE_NAME AS table_name
+SELECT TABLE_NAME AS table_name, ENGINE AS storage_engine
 FROM information_schema.TABLES
 WHERE TABLE_SCHEMA = %s AND TABLE_TYPE = 'BASE TABLE'
 ORDER BY TABLE_NAME;
@@ -168,7 +168,8 @@ def introspect_mysql(params: dict[str, Any], schema: str) -> SchemaPack:
 
             # Sorted here: ORDER BY follows the server's collation, which puts
             # "orders" before "order_lines" on some servers and not others.
-            table_names = sorted(r["table_name"] for r in _rows(cur, _TABLES_SQL, schema))
+            storage = {r["table_name"]: r["storage_engine"] for r in _rows(cur, _TABLES_SQL, schema)}
+            table_names = sorted(storage)
             columns = _rows(cur, _COLUMNS_SQL, schema)
             key_columns = _rows(cur, _KEY_COLUMNS_SQL, schema)
             table_constraints = _rows(cur, _TABLE_CONSTRAINTS_SQL, schema)
@@ -194,6 +195,11 @@ def introspect_mysql(params: dict[str, Any], schema: str) -> SchemaPack:
             default=_column_default(c, is_mariadb),
         ))
 
+    # With lower_case_table_names=2 (macOS) a referenced table comes back in
+    # lower case while its own name keeps its case; match them up, or the
+    # reference points at a table that seems not to exist.
+    real_name = {n.lower(): n for n in table_names}
+
     # Constraint columns, in key order, and the foreign keys among them.
     constraint_cols: dict[tuple[str, str], list[str]] = defaultdict(list)
     for k in key_columns:
@@ -201,7 +207,7 @@ def introspect_mysql(params: dict[str, Any], schema: str) -> SchemaPack:
         if k["to_table"] is not None:
             by_table[k["table_name"]]["fks"].append(RawForeignKey(
                 from_column=k["column_name"],
-                to_table=k["to_table"],
+                to_table=real_name.get(k["to_table"].lower(), k["to_table"]),
                 to_column=k["to_column"],
                 constraint_name=k["constraint_name"],
             ))
@@ -247,6 +253,7 @@ def introspect_mysql(params: dict[str, Any], schema: str) -> SchemaPack:
         table, relationships = build_table(
             tname, schema, t["columns"], t["pk"], t["fks"], t["constraints"], t["indexes"],
         )
+        table.storageEngine = storage[tname]
         tables.append(table)
         all_relationships.extend(relationships)
 

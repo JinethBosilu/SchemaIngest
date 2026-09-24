@@ -56,11 +56,19 @@ def render_schema_txt(pack: SchemaPack) -> str:
         lines.append("")
 
     # Relationships section
-    if pack.relationships:
+    declared = [r for r in pack.relationships if not r.inferred]
+    inferred = [r for r in pack.relationships if r.inferred]
+    if declared:
         lines.append("---")
         lines.append("RELATIONSHIPS")
-        for r in pack.relationships:
+        for r in declared:
             lines.append(f"  {r.fromTable}.{r.fromColumn} -> {r.toTable}.{r.toColumn} ({r.constraintName})")
+        lines.append("")
+    if inferred:
+        lines.append("---")
+        lines.append("INFERRED RELATIONSHIPS (from column names; not declared in the database)")
+        for r in inferred:
+            lines.append(f"  {r.fromTable}.{r.fromColumn} -> {r.toTable}.{r.toColumn}")
         lines.append("")
 
     # Indexes section
@@ -100,7 +108,9 @@ def render_erd_mermaid(pack: SchemaPack) -> str:
         if (r.fromTable, r.constraintName) in seen:
             continue
         seen.add((r.fromTable, r.constraintName))
-        label = r.constraintName.replace('"', "'")
-        lines.append(f'    {_mermaid_ident(r.toTable)} ||--o{{ {_mermaid_ident(r.fromTable)} : "{label}"')
+        # Inferred links are dotted, and labelled as such.
+        label = "inferred" if r.inferred else r.constraintName.replace('"', "'")
+        line = "..o{" if r.inferred else "--o{"
+        lines.append(f'    {_mermaid_ident(r.toTable)} ||{line} {_mermaid_ident(r.fromTable)} : "{label}"')
 
     return "\n".join(lines)

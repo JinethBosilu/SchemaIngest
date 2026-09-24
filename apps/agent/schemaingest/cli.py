@@ -71,7 +71,11 @@ def agent(port: int):
     type=click.Choice(["json", "txt"]), default="json", show_default=True,
     help="json: the full schema pack. txt: the compact text for pasting into an AI.",
 )
-def pull(conn: str, out: str, schema: str | None, fmt: str):
+@click.option(
+    "--no-infer", is_flag=True,
+    help="Leave out relationships inferred from column names; keep only declared foreign keys.",
+)
+def pull(conn: str, out: str, schema: str | None, fmt: str, no_infer: bool):
     """Export the schema without the web UI."""
     from schemaingest.introspect import introspect
     from schemaingest.models import ConnectRequest
@@ -81,6 +85,8 @@ def pull(conn: str, out: str, schema: str | None, fmt: str):
 
     try:
         pack = introspect(ConnectRequest(connectionString=conn, schema=schema))
+        if no_infer:
+            pack.relationships = [r for r in pack.relationships if not r.inferred]
     except Exception as e:
         click.echo(f"Connection failed: {redact_password(str(e))}", err=True)
         sys.exit(1)
@@ -92,7 +98,11 @@ def pull(conn: str, out: str, schema: str | None, fmt: str):
             json.dump(pack.model_dump(by_alias=True), f, indent=2)
 
     click.echo(f"Schema written to {out}")
-    click.echo(f"   Tables: {len(pack.tables)}, Relationships: {len(pack.relationships)}")
+    inferred = sum(r.inferred for r in pack.relationships)
+    click.echo(
+        f"   Tables: {len(pack.tables)}, Relationships: {len(pack.relationships) - inferred}"
+        + (f" declared, {inferred} inferred from column names" if inferred else "")
+    )
 
 
 if __name__ == "__main__":

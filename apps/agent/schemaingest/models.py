@@ -50,6 +50,7 @@ class TableInfo(BaseModel):
     primaryKey: list[str] = Field(default_factory=list, alias="primaryKey")
     indexes: list[IndexInfo] = Field(default_factory=list)
     constraints: list[ConstraintInfo] = Field(default_factory=list)
+    storageEngine: Optional[str] = None  # MySQL only, e.g. "InnoDB" or "MyISAM"
 
     model_config = {"populate_by_name": True}
 
@@ -60,6 +61,8 @@ class Relationship(BaseModel):
     toTable: str = Field(alias="toTable")
     toColumn: str = Field(alias="toColumn")
     constraintName: str = Field(alias="constraintName")
+    # Guessed from column names (see infer.py), not declared in the database.
+    inferred: bool = False
 
     model_config = {"populate_by_name": True}
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 
+from schemaingest.models import Relationship
 from schemaingest.renderers import render_erd_mermaid, render_schema_txt
 
 
@@ -35,4 +36,25 @@ def test_mermaid_key_markers_are_not_comments(pack):
 def test_mermaid_draws_composite_fk_once(pack):
     mmd = render_erd_mermaid(pack)
     assert mmd.count("||--o{") == 1
+    assert 'orders ||--o{ order_lines : "order_lines_order_fkey"' in mmd
+
+
+def _with_inferred(pack):
+    pack.relationships.append(Relationship(
+        fromTable="order_lines", fromColumn="line_id", toTable="orders", toColumn="id",
+        constraintName="inferred:line_id", inferred=True,
+    ))
+    return pack
+
+
+def test_schema_txt_keeps_inferred_links_apart(pack):
+    txt = render_schema_txt(_with_inferred(pack))
+    declared, inferred = txt.split("INFERRED RELATIONSHIPS (from column names; not declared in the database)")
+    assert "inferred" not in declared.split("RELATIONSHIPS", 1)[1]
+    assert "  order_lines.line_id -> orders.id\n" in inferred
+
+
+def test_mermaid_dots_inferred_links(pack):
+    mmd = render_erd_mermaid(_with_inferred(pack))
+    assert 'orders ||..o{ order_lines : "inferred"' in mmd
     assert 'orders ||--o{ order_lines : "order_lines_order_fkey"' in mmd

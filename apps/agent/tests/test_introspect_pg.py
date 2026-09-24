@@ -47,6 +47,15 @@ CREATE TABLE order_lines (
 CREATE INDEX order_lines_open_idx ON order_lines (order_id) WHERE sku <> '';
 CREATE INDEX order_lines_sku_lower_idx ON order_lines (lower(sku));
 
+-- No declared keys. warehouse_id names a table with a one-column key, so it
+-- is inferred; order_id names orders, whose key has two columns, so it is not.
+CREATE TABLE warehouses (id integer PRIMARY KEY);
+CREATE TABLE shipments (
+    id           integer PRIMARY KEY,
+    warehouse_id integer,
+    order_id     integer
+);
+
 -- Self reference.
 CREATE TABLE categories (
     id        integer PRIMARY KEY,
@@ -59,14 +68,15 @@ CREATE TABLE categories (
 def pack():
     import psycopg2
 
-    from schemaingest.introspect.postgres import introspect_postgres
+    from schemaingest.introspect import introspect
+    from schemaingest.models import ConnectRequest
 
     conn = psycopg2.connect(DSN)
     conn.autocommit = True
     with conn.cursor() as cur:
         cur.execute(FIXTURE_SQL)
     try:
-        yield introspect_postgres(DSN, schema=SCHEMA)
+        yield introspect(ConnectRequest(connectionString=DSN, schema=SCHEMA))
     finally:
         with conn.cursor() as cur:
             cur.execute(f"DROP SCHEMA IF EXISTS {SCHEMA} CASCADE")
@@ -78,7 +88,9 @@ def _table(pack, name):
 
 
 def test_lists_tables(pack):
-    assert [t.name for t in pack.tables] == ["categories", "order_lines", "orders", "regions"]
+    assert [t.name for t in pack.tables] == [
+        "categories", "order_lines", "orders", "regions", "shipments", "warehouses",
+    ]
     assert pack.meta.schema_ == SCHEMA
     assert pack.meta.engine == "postgresql"
     assert pack.meta.dbVersion.startswith("PostgreSQL ")
@@ -103,7 +115,7 @@ def test_composite_fk_pairs_columns_without_cross_product(pack):
 
 
 def test_self_reference(pack):
-    rels = [r for r in pack.relationships if r.fromTable == "categories"]
+    rels = [r for r in pack.relationships if r.fromTable == "categories" and not r.inferred]
     assert [(r.fromColumn, r.toTable, r.toColumn) for r in rels] == [("parent_id", "categories", "id")]
 
 
@@ -129,3 +141,10 @@ def test_constraints_exclude_not_null_noise(pack):
 def test_array_column_type(pack):
     tags = next(c for c in _table(pack, "orders").columns if c.name == "tags")
     assert tags.type == "text[]"
+
+
+def test_undeclared_links_are_inferred_and_marked(pack):
+    inferred = [(r.fromTable, r.fromColumn, r.toTable, r.toColumn) for r in pack.relationships if r.inferred]
+    assert inferred == [("shipments", "warehouse_id", "warehouses", "id")]
+    # Declared keys are never repeated as inferred ones.
+    assert not any(r.inferred for r in pack.relationships if r.fromTable in ("order_lines", "categories"))
