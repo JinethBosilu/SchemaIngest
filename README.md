@@ -69,10 +69,13 @@ Go to **https://jinethbosilu.github.io/SchemaIngest/**
 3. Browse your schema: tables, columns, keys and indexes, plus the **Diagram** tab.
 4. Click **"Copy for AI"** to copy a token-efficient schema description.
 
-Chrome and Edge may ask whether the page can access devices on your **local network**.
-Allow it: that is the browser checking before a public site talks to the agent on
-`127.0.0.1`. If the page says the agent is not found while it is running, check that
-permission (the icon left of the address bar).
+Chrome and Edge ask whether the page may access your **local network**. Allow it: that
+is the browser checking before a public site talks to the agent on `127.0.0.1`.
+
+**"Your browser is blocking this page" / "Agent not found" while the agent is running:**
+the permission was dismissed or blocked. Click the icon left of the address bar →
+**Site settings** → set **Local network access** (in some versions **Apps on device**) to
+**Allow**, then return to the tab; it connects by itself.
 
 ### 4. CLI-Only Export (Optional)
 
@@ -104,6 +107,7 @@ MySQL connection strings take one option, `ssl-mode`, with MySQL's values: `DISA
 | **Databases** | PostgreSQL, MySQL 8 and MariaDB |
 | **Schema Introspection** | Tables, columns, types, defaults, nullability |
 | **Keys & Constraints** | Primary keys, foreign keys (composite included), unique, check constraints |
+| **Inferred links** | For databases that declare no keys (MyISAM, many apps), links guessed from names like `user_id`, always marked as inferred |
 | **Indexes** | Key columns (expressions and prefixes included), uniqueness |
 | **Diagram: Table view** | The selected table in the middle, what references it on the left, what it references on the right, with the joining columns on every card |
 | **Diagram: Graph view** | The same neighbourhood as a ring coloured by direction, plus the references among the neighbours |
@@ -113,6 +117,27 @@ MySQL connection strings take one option, `ssl-mode`, with MySQL's values: `DISA
 
 In the diagram, click any neighbouring table to move to it. Browser back and forward
 walk the trail, and hovering a card or circle spells out every column match.
+
+### Declared and inferred relationships
+
+Relationships come from the foreign keys the database declares. Many databases declare
+none: MyISAM tables throw FOREIGN KEY clauses away, and plenty of applications only use
+naming like `user_id`. So the agent also links a `<name>_id` column (or `<name>Id`) that no
+declared key covers, when:
+- a table is named after it (`users`, `categories`, and `shipping_address_id` finds
+  `addresses`);
+- that table has a single-column primary key;
+- the two columns hold the same kind of value.
+
+`parent_id` with no `parents` table points to its own table.
+
+Inferred links are never shown as declared ones:
+- they are dashed in the diagram;
+- they read "inferred from column name" in the detail panel;
+- Copy for AI lists them under `INFERRED RELATIONSHIPS`.
+
+The diagram's **Inferred links** toggle hides them, and `schemaingest pull --no-infer`
+leaves them out.
 
 ---
 
