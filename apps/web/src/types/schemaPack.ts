@@ -45,7 +45,11 @@ export interface Relationship {
     constraintName: string;
 }
 
+/** mysql covers MariaDB too; DbMeta.dbVersion names which. */
+export type Engine = 'postgresql' | 'mysql';
+
 export interface DbMeta {
+    engine?: Engine;      // absent in packs from agents before MySQL support
     dbName: string;
     dbVersion: string;
     schema: string;
@@ -60,11 +64,12 @@ export interface SchemaPack {
 }
 
 export interface ConnectFields {
+    engine?: Engine;
     connectionString?: string;
     host?: string;
     port?: number;
     dbname?: string;
     user?: string;
     password?: string;
-    schema?: string;
+    schema?: string;      // PostgreSQL only; in MySQL the database is the schema
 }

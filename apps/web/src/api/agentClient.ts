@@ -70,7 +70,7 @@ export async function pair(code: string): Promise<string> {
 }
 
 /**
- * Introspect a Postgres database and return the full schema pack.
+ * Introspect a PostgreSQL or MySQL/MariaDB database and return the full schema pack.
  */
 export async function introspect(fields: ConnectFields): Promise<SchemaPack> {
     const res = await fetch(`${AGENT_BASE}/introspect`, {

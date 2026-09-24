@@ -9,9 +9,10 @@ export function renderSchemaText(pack: SchemaPack): string {
     const lines: string[] = [
         `# Database: ${pack.meta.dbName}`,
         `# Schema: ${pack.meta.schema}`,
-        `# Generated: ${pack.meta.generatedAt}`,
-        '',
     ];
+    // Tells the reader which SQL dialect to write.
+    if (pack.meta.dbVersion) lines.push(`# Server: ${pack.meta.dbVersion}`);
+    lines.push(`# Generated: ${pack.meta.generatedAt}`, '');
 
     for (const t of pack.tables) {
         lines.push(`TABLE ${t.name}`);

@@ -49,7 +49,12 @@ export default function SchemaPage() {
                     <div>
                         <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{pack.meta.dbName}</div>
                         <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                            {pack.meta.schema} · {pack.tables.length} tables
+                            {[
+                                pack.meta.dbVersion,
+                                // In MySQL the schema is the database, already named above.
+                                pack.meta.schema !== pack.meta.dbName && pack.meta.schema,
+                                `${pack.tables.length} tables`,
+                            ].filter(Boolean).join(' · ')}
                         </div>
                     </div>
                     <CopyButton getText={async () => schemaText} label="📋 Copy for AI" />
