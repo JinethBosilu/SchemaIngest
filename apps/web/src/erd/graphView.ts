@@ -26,6 +26,9 @@ function backOff(px: number, py: number, qx: number, qy: number, pad: number): [
     return [px + dx / L * pad, py + dy / L * pad];
 }
 
+/** Tied to the focus only by links guessed from column names. */
+const onlyInferred = (d: RingNode): boolean => [...d.out, ...d.in].every(r => r.inferred);
+
 function dirWords(d: RingNode, name: string): string {
     if (d.dir === 'both') return `${name} and ${d.table} reference each other`;
     return d.dir === 'out' ? `${name} references it` : `it references ${name}`;
@@ -90,7 +93,8 @@ export class GraphView {
 
         this.chords = st.lines.selectAll<SVGPathElement, DrawnChord>('path.chord').data(chords).enter()
             .append('path')
-            .attr('class', 'chord').attr('d', d => d.d).attr('opacity', this.chordBase)
+            .attr('class', d => 'chord' + (d.ref.inferred ? ' inferred' : ''))
+            .attr('d', d => d.d).attr('opacity', this.chordBase)
             .attr('marker-end', 'url(#erd-ar-near)')
             .on('mouseenter', (_ev, d) => this.highlight(null, d))
             .on('mouseleave', () => this.clear());
@@ -99,7 +103,8 @@ export class GraphView {
 
         this.spokes = st.lines.selectAll<SVGPathElement, Spoke>('path.spoke').data(spokes).enter()
             .append('path')
-            .attr('class', d => 'spoke ' + d.dir).attr('d', d => d.d)
+            .attr('class', d => 'spoke ' + d.dir + (onlyInferred(d.node) ? ' inferred' : ''))
+            .attr('d', d => d.d)
             .attr('opacity', this.base)
             .attr('marker-end', d => `url(#erd-ar-${d.dir})`)
             // auto-start-reverse turns the start head round so it points back at the focus.
@@ -114,7 +119,8 @@ export class GraphView {
                 .append('title').text(`${name} → ${name}`);
 
         const nodes = st.nodes.selectAll<SVGGElement, RingNode>('g.node').data(ring).enter().append('g')
-            .attr('class', d => 'node ' + d.dir + (model.degOf(d.table) >= 25 ? ' hub' : ''))
+            .attr('class', d => 'node ' + d.dir + (model.degOf(d.table) >= 25 ? ' hub' : '') +
+                (onlyInferred(d) ? ' inferred' : ''))
             .attr('transform', d => `rotate(${d.a * 180 / Math.PI}) translate(${R},0)`)
             .on('mouseenter', (_ev, d) => this.highlight(d, null))
             .on('mouseleave', () => this.clear())
@@ -126,7 +132,8 @@ export class GraphView {
         nodes.append('circle').attr('r', d => d.r);
         nodes.append('title').text(d =>
             `${d.table}\n${model.subOf(d.table)}\n${dirWords(d, name)}\n` +
-            `${model.degOf(d.table)} related tables of its own`);
+            `${model.degOf(d.table)} related tables of its own` +
+            (onlyInferred(d) ? '\ninferred from column names' : ''));
         // Rotated to its own spoke, so the labels fan out from the centre and
         // cannot collide however many there are.
         nodes.append('text').attr('class', 'lbl')
@@ -144,7 +151,7 @@ export class GraphView {
             .attr('y', R_CORE + 17).attr('text-anchor', 'middle').text(name);
 
         if (!n) st.nodes.append('text').attr('class', 'ghint')
-            .attr('x', 0).attr('y', 62).attr('text-anchor', 'middle').text(alone(name));
+            .attr('x', 0).attr('y', 62).attr('text-anchor', 'middle').text(alone(name, model.inferred));
 
         st.top.innerHTML = topLine(model, name, n, N.selfRefs.length) +
             (chords.length ? ` <span>· <em>${chords.length}</em> between them</span>` : '');

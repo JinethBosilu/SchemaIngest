@@ -27,10 +27,18 @@ export function renderSchemaText(pack: SchemaPack): string {
         lines.push('');
     }
 
-    if (pack.relationships.length) {
+    const declared = pack.relationships.filter(r => !r.inferred);
+    const inferred = pack.relationships.filter(r => r.inferred);
+    if (declared.length) {
         lines.push('---', 'RELATIONSHIPS');
-        for (const r of pack.relationships)
+        for (const r of declared)
             lines.push(`  ${r.fromTable}.${r.fromColumn} -> ${r.toTable}.${r.toColumn} (${r.constraintName})`);
+        lines.push('');
+    }
+    if (inferred.length) {
+        lines.push('---', 'INFERRED RELATIONSHIPS (from column names; not declared in the database)');
+        for (const r of inferred)
+            lines.push(`  ${r.fromTable}.${r.fromColumn} -> ${r.toTable}.${r.toColumn}`);
         lines.push('');
     }
 

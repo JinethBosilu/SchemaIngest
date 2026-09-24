@@ -35,6 +35,7 @@ export interface TableInfo {
     primaryKey: string[];
     indexes: IndexInfo[];
     constraints: ConstraintInfo[];
+    storageEngine?: string | null;  // MySQL only; MyISAM keeps no foreign keys
 }
 
 export interface Relationship {
@@ -43,6 +44,7 @@ export interface Relationship {
     toTable: string;
     toColumn: string;
     constraintName: string;
+    inferred?: boolean;   // guessed from column names, not declared in the database
 }
 
 /** mysql covers MariaDB too; DbMeta.dbVersion names which. */

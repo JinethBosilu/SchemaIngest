@@ -2,7 +2,8 @@
    view is ported from: every table carries its outbound references, and an
    inbound index answers "what points at me". A reference is one foreign key -
    a composite key is one reference with several column matches, not several
-   references. Nothing here is inferred; it is the pack, regrouped. */
+   references. Nothing is inferred here: links the agent guessed from column
+   names arrive marked inferred, and are dropped when inferred is off. */
 
 import type { SchemaPack, TableInfo } from '../types/schemaPack';
 
@@ -13,6 +14,7 @@ export interface Reference {
     table: string;        // the table pointed at
     constraint: string;
     columns: ColumnMatch[];
+    inferred: boolean;    // guessed from column names, not a declared key
 }
 
 export interface Entity {
@@ -55,20 +57,23 @@ export class ErdModel {
     readonly byTable = new Map<string, Entity>();
     readonly inbound = new Map<string, Inbound[]>();
     readonly degree = new Map<string, number>();
+    readonly inferred: boolean;
 
-    constructor(pack: SchemaPack) {
+    constructor(pack: SchemaPack, opts: { inferred?: boolean } = {}) {
+        this.inferred = opts.inferred ?? true;
         for (const t of pack.tables) this.byTable.set(t.name, { name: t.name, info: t, references: [] });
 
         // Relationships come one row per column pair; the constraint name ties
         // the columns of one key back together.
         const byKey = new Map<string, Reference>();
         for (const r of pack.relationships) {
+            if (r.inferred && !this.inferred) continue;
             const owner = this.byTable.get(r.fromTable);
             if (!owner) continue;
             const key = `${r.fromTable}\u0000${r.constraintName}`;
             let ref = byKey.get(key);
             if (!ref) {
-                ref = { table: r.toTable, constraint: r.constraintName, columns: [] };
+                ref = { table: r.toTable, constraint: r.constraintName, columns: [], inferred: !!r.inferred };
                 byKey.set(key, ref);
                 owner.references.push(ref);
             }

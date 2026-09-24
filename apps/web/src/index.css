@@ -606,6 +606,19 @@ body {
 .erd-legend .in { background: var(--erd-in); }
 .erd-legend .both { background: var(--erd-both); }
 .erd-legend .near { background: var(--erd-near); }
+.erd-legend i.dash { width: 15px; height: 0; border-top: 2px dashed var(--text-muted); vertical-align: 3px; }
+
+.erd-toggle {
+  display: inline-flex; align-items: center; gap: 6px; font-size: 0.68rem;
+  color: var(--text-secondary); cursor: pointer; white-space: nowrap; user-select: none;
+}
+.erd-toggle input { accent-color: var(--accent); margin: 0; }
+
+.erd-note {
+  padding: 7px 14px; font-size: 0.72rem; line-height: 1.45;
+  color: var(--warning); background: var(--warning-bg);
+  border-bottom: 1px solid var(--border);
+}
 
 .erd-btn {
   display: flex;
@@ -710,6 +723,11 @@ body {
 .erd-canvas .spoke.both { stroke: var(--erd-both); }
 .erd-canvas .loop { stroke: var(--erd-out); stroke-width: 1.2px; }
 .erd-canvas .chord { stroke: var(--erd-near); stroke-width: 1px; }
+/* Links guessed from column names are dashed, never drawn like declared keys. */
+.erd-canvas .edge.inferred, .erd-canvas .spoke.inferred, .erd-canvas .chord.inferred { stroke-dasharray: 5 4; }
+.erd-canvas .card.inferred rect { stroke-dasharray: 4 3; }
+.erd-canvas .node.inferred circle { fill-opacity: 0.45; stroke-dasharray: 3 2; }
+.erd-detail .who i { font-style: normal; color: var(--warning); }
 .erd-canvas .node { cursor: pointer; outline: none; }
 .erd-canvas .node.dead { cursor: default; }
 .erd-canvas .node circle { stroke: var(--bg-input); stroke-width: 1.5px; }

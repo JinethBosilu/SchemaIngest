@@ -9,6 +9,12 @@ import { GraphView } from '../erd/graphView';
 
 export type ErdMode = 'table' | 'graph';
 
+const INFERRED_KEY = 'schemaingest.erd.inferred';
+
+function readInferredPref(): boolean {
+    try { return localStorage.getItem(INFERRED_KEY) !== 'off'; } catch { return true; }
+}
+
 interface ErdViewProps {
     pack: SchemaPack;
     focus: string;
@@ -31,8 +37,21 @@ export default function ErdView({ pack, focus, mode, onSelect, onMode }: ErdView
     const stageRef = useRef<Stage | null>(null);
     const [size, setSize] = useState({ w: 0, h: 0 });
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [showInferred, setShowInferred] = useState(readInferredPref);
 
-    const model = useMemo(() => new ErdModel(pack), [pack]);
+    const model = useMemo(() => new ErdModel(pack, { inferred: showInferred }), [pack, showInferred]);
+
+    // What the pack says about keys, for the toggle and the notice above the canvas.
+    const keys = useMemo(() => ({
+        declared: pack.relationships.some(r => !r.inferred),
+        inferred: pack.relationships.some(r => r.inferred),
+        myisam: pack.tables.filter(t => t.storageEngine?.toLowerCase() === 'myisam').length,
+    }), [pack]);
+
+    const toggleInferred = (on: boolean) => {
+        setShowInferred(on);
+        try { localStorage.setItem(INFERRED_KEY, on ? 'on' : 'off'); } catch { /* private mode */ }
+    };
 
     // The latest onSelect, without re-rendering the canvas when its identity changes.
     const selectRef = useRef(onSelect);
@@ -94,7 +113,18 @@ export default function ErdView({ pack, focus, mode, onSelect, onMode }: ErdView
                     ))}
                 </div>
                 <div className="erd-counts" ref={topRef} />
+                {keys.inferred && (
+                    <label className="erd-toggle" title="Links guessed from column names such as user_id">
+                        <input
+                            type="checkbox"
+                            checked={showInferred}
+                            onChange={e => toggleInferred(e.target.checked)}
+                        />
+                        Inferred links
+                    </label>
+                )}
                 <div className="erd-legend">
+                    {keys.inferred && showInferred && <span><i className="dash" />inferred</span>}
                     {mode === 'table' ? (
                         <>
                             <span><i className="bar out" />references</span>
@@ -118,6 +148,15 @@ export default function ErdView({ pack, focus, mode, onSelect, onMode }: ErdView
                     {isFullscreen ? <Minimize size={15} /> : <Maximize size={15} />}
                 </button>
             </div>
+            {!keys.declared && (
+                <div className="erd-note" role="note">
+                    This database declares no foreign keys
+                    {keys.myisam > 0 && <> - {keys.myisam} {keys.myisam === 1 ? 'table uses' : 'tables use'} MyISAM, which does not keep them</>}
+                    {keys.inferred
+                        ? (showInferred ? '. Dashed links are inferred from column names.' : '. Turn on inferred links to see ones guessed from column names.')
+                        : ', and no column names suggest any.'}
+                </div>
+            )}
             <div className="erd-wrap" ref={wrapRef}>
                 <svg className="erd-canvas" ref={svgRef} />
                 <div className="erd-panel erd-detail" ref={detailRef} />

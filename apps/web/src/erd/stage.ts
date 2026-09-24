@@ -109,7 +109,7 @@ export interface Leg { ref: Reference; src: string; tgt: string }
 
 export function legHtml(l: Leg): string {
     return `<div class="leg"><div class="hd">${esc(l.src)} → ${esc(l.tgt)}</div>
-     <div class="who">${esc(l.ref.constraint)}</div>
+     <div class="who">${l.ref.inferred ? '<i>inferred from column name</i>' : esc(l.ref.constraint)}</div>
      <ul>${l.ref.columns.map(c =>
         `<li>${esc(c.from)} <span>→</span> ${esc(c.to)}</li>`).join('')}</ul></div>`;
 }
@@ -117,8 +117,9 @@ export function legHtml(l: Leg): string {
 export const hint = (lead: string): string => `<div class="hd">${esc(lead)}</div>` +
     '<div class="who">click one to move there · scroll to zoom · drag to pan</div>';
 
-export const alone = (name: string): string =>
-    `Nothing references ${name}, and it references nothing - it has no foreign keys either way.`;
+export const alone = (name: string, inferred: boolean): string =>
+    `Nothing references ${name}, and it references nothing - no foreign keys either way` +
+    (inferred ? ', and no column names that suggest one.' : '.');
 
 export function topLine(model: ErdModel, name: string, total: number, selfN: number): string {
     const e = model.byTable.get(name)!;

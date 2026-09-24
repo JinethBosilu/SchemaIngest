@@ -133,7 +133,7 @@ export class TableView {
         this.base = N.outs.length + N.ins.length > 24 ? 0.3 : 0.62;
 
         this.paths = st.lines.selectAll<SVGPathElement, Edge>('path').data(edges).enter().append('path')
-            .attr('class', d => 'edge ' + d.dir)
+            .attr('class', d => 'edge ' + d.dir + (d.ref.inferred ? ' inferred' : ''))
             .attr('d', d => d.d)
             .attr('opacity', this.base)
             .attr('marker-end', d => `url(#erd-ar-${d.dir})`)
@@ -142,7 +142,9 @@ export class TableView {
 
         const cards = st.nodes.selectAll<SVGGElement, Card>('g.card').data([...N.ins, ...N.outs]).enter()
             .append('g')
-            .attr('class', d => 'card ' + d.dir)
+            // A card is dashed when nothing but an inferred link ties it to the focus.
+            .attr('class', d => 'card ' + d.dir +
+                (d.ref.inferred && (!d.back || d.back.inferred) ? ' inferred' : ''))
             .attr('transform', d => `translate(${d.x},${d.y})`)
             .on('mouseenter', (_ev, d) => this.highlight(d, null))
             .on('mouseleave', () => this.clear())
@@ -155,7 +157,8 @@ export class TableView {
         cards.append('title').text(d =>
             `${d.dir === 'out' ? name + ' → ' + d.table : d.table + ' → ' + name}\n` +
             `${model.subOf(d.table)}\n` +
-            d.ref.columns.map(m => `${m.from} → ${m.to}`).join('\n'));
+            d.ref.columns.map(m => `${m.from} → ${m.to}`).join('\n') +
+            (d.ref.inferred ? '\ninferred from column name' : ''));
         cards.append('text').attr('class', 'nm').attr('x', 11).attr('y', 20)
             .text(d => clip(d.table, 25));
         cards.append('text').attr('class', 'tb').attr('x', 11).attr('y', 33)
@@ -194,7 +197,7 @@ export class TableView {
 
         if (!edges.length) st.nodes.append('text').attr('class', 'ghint')
             .attr('x', 0).attr('y', fy + FH + 34).attr('text-anchor', 'middle')
-            .text(alone(name));
+            .text(alone(name, model.inferred));
 
         st.top.innerHTML = topLine(model, name, N.outs.length + N.ins.length, N.selfRefs.length);
         this.clear();
