@@ -1,23 +1,12 @@
-"""Postgres schema introspection via information_schema + pg_catalog."""
+"""PostgreSQL introspection via information_schema + pg_catalog."""
 
 from __future__ import annotations
-
-from datetime import datetime, timezone
 
 import psycopg2
 import psycopg2.extras
 
-from schemaingest import __version__
-from schemaingest.models import (
-    ColumnInfo,
-    ConstraintInfo,
-    DbMeta,
-    FkRef,
-    IndexInfo,
-    Relationship,
-    SchemaPack,
-    TableInfo,
-)
+from schemaingest.introspect.common import build_table, make_meta
+from schemaingest.models import ConstraintInfo, IndexInfo, Relationship, SchemaPack, TableInfo
 
 # ─── SQL queries ──────────────────────────────────────────────────────
 
@@ -122,7 +111,9 @@ WHERE n.nspname = %s AND t.relname = %s
 ORDER BY i.relname;
 """
 
-_DB_VERSION_SQL = "SELECT version();"
+# "PostgreSQL 16.4" - not version()'s build string, nor the distro suffix
+# server_version can carry ("16.4 (Debian 16.4-1.pgdg120+2)").
+_DB_VERSION_SQL = "SELECT 'PostgreSQL ' || split_part(current_setting('server_version'), ' ', 1) AS version;"
 
 
 # ─── Introspection logic ─────────────────────────────────────────────
@@ -152,32 +143,15 @@ def _introspect_table(cur, schema: str, tname: str) -> tuple[TableInfo, list[Rel
     pk_cols = [r["column_name"] for r in cur.fetchall()]
 
     cur.execute(_FK_SQL, (schema, tname))
-    relationships: list[Relationship] = []
-    fk_map: dict[str, FkRef] = {}
-    for fk in cur.fetchall():
-        # A column in two foreign keys keeps its first target for fkRef; every
-        # pairing is still listed in relationships.
-        fk_map.setdefault(fk["from_column"], FkRef(table=fk["to_table"], column=fk["to_column"]))
-        relationships.append(
-            Relationship(
-                fromTable=tname,
-                fromColumn=fk["from_column"],
-                toTable=fk["to_table"],
-                toColumn=fk["to_column"],
-                constraintName=fk["constraint_name"],
-            )
-        )
+    fks = cur.fetchall()
 
     columns = [
-        ColumnInfo(
-            name=rc["column_name"],
-            type=_column_type_display(rc),
-            nullable=rc["is_nullable"] == "YES",
-            default=rc["column_default"],
-            isPrimaryKey=rc["column_name"] in pk_cols,
-            isForeignKey=rc["column_name"] in fk_map,
-            fkRef=fk_map.get(rc["column_name"]),
-        )
+        {
+            "name": rc["column_name"],
+            "type": _column_type_display(rc),
+            "nullable": rc["is_nullable"] == "YES",
+            "default": rc["column_default"],
+        }
         for rc in raw_columns
     ]
 
@@ -198,19 +172,11 @@ def _introspect_table(cur, schema: str, tname: str) -> tuple[TableInfo, list[Rel
         for ix in cur.fetchall()
     ]
 
-    table = TableInfo(
-        name=tname,
-        schema=schema,
-        columns=columns,
-        primaryKey=pk_cols,
-        indexes=indexes,
-        constraints=constraints,
-    )
-    return table, relationships
+    return build_table(tname, schema, columns, pk_cols, fks, constraints, indexes)
 
 
 def introspect_postgres(dsn: str, schema: str = "public") -> SchemaPack:
-    """Connect to Postgres and introspect the given schema.
+    """Connect to PostgreSQL and introspect the given schema.
 
     Args:
         dsn: Connection string (libpq format or URI).
@@ -239,12 +205,5 @@ def introspect_postgres(dsn: str, schema: str = "public") -> SchemaPack:
     finally:
         conn.close()
 
-    meta = DbMeta(
-        dbName=db_name,
-        dbVersion=db_version,
-        schema=schema,
-        generatedAt=datetime.now(timezone.utc).isoformat(),
-        agentVersion=__version__,
-    )
-
+    meta = make_meta("postgresql", db_name, db_version, schema)
     return SchemaPack(meta=meta, tables=tables, relationships=all_relationships)

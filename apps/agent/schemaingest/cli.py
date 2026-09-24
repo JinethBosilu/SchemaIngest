@@ -57,23 +57,30 @@ def agent(port: int):
 
 
 @main.command()
-@click.option("--conn", required=True, help="PostgreSQL connection string.")
+@click.option(
+    "--conn", required=True,
+    help="Connection string: postgresql://user:pass@host/db or mysql://user:pass@host/db.",
+)
 @click.option("--out", required=True, type=click.Path(dir_okay=False), help="Output file path.")
-@click.option("--schema", default="public", show_default=True, help="Schema to introspect.")
+@click.option(
+    "--schema", default=None,
+    help="Schema to introspect. PostgreSQL: defaults to public. MySQL: the database in --conn.",
+)
 @click.option(
     "--format", "fmt",
     type=click.Choice(["json", "txt"]), default="json", show_default=True,
     help="json: the full schema pack. txt: the compact text for pasting into an AI.",
 )
-def pull(conn: str, out: str, schema: str, fmt: str):
+def pull(conn: str, out: str, schema: str | None, fmt: str):
     """Export the schema without the web UI."""
-    from schemaingest.introspect import introspect_postgres
+    from schemaingest.introspect import introspect
+    from schemaingest.models import ConnectRequest
     from schemaingest.renderers import render_schema_txt
 
     click.echo(f"Connecting to: {redact_password(conn)}")
 
     try:
-        pack = introspect_postgres(conn, schema=schema)
+        pack = introspect(ConnectRequest(connectionString=conn, schema=schema))
     except Exception as e:
         click.echo(f"Connection failed: {redact_password(str(e))}", err=True)
         sys.exit(1)

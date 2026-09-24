@@ -10,9 +10,10 @@
       "type": "object",
       "required": ["dbName", "schema", "generatedAt", "agentVersion"],
       "properties": {
+        "engine": { "type": "string", "enum": ["postgresql", "mysql"], "default": "postgresql", "description": "mysql covers MariaDB too; dbVersion names which." },
         "dbName": { "type": "string" },
-        "dbVersion": { "type": "string" },
-        "schema": { "type": "string", "default": "public" },
+        "dbVersion": { "type": "string", "description": "e.g. PostgreSQL 16.4, MySQL 8.4.2, MariaDB 10.4.32" },
+        "schema": { "type": "string", "default": "public", "description": "For MySQL, the database." },
         "generatedAt": { "type": "string", "format": "date-time" },
         "agentVersion": { "type": "string" }
       }

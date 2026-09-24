@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "schemaingest"
 dynamic = ["version"]
-description = "Introspect your Postgres schema through a web UI, without credentials leaving your machine."
+description = "Introspect your PostgreSQL or MySQL/MariaDB schema through a web UI, without credentials leaving your machine."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
@@ -13,7 +13,7 @@ license-files = ["LICENSE"]
 authors = [
     {name = "Jineth Bosilu"}
 ]
-keywords = ["postgres", "postgresql", "schema", "introspection", "erd", "database", "llm"]
+keywords = ["postgres", "postgresql", "mysql", "mariadb", "schema", "introspection", "erd", "database", "llm"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
@@ -33,6 +33,7 @@ dependencies = [
     "fastapi>=0.104.0",
     "uvicorn[standard]>=0.24.0",
     "psycopg2-binary>=2.9.9",
+    "PyMySQL[rsa]>=1.1",  # rsa: MySQL 8's default caching_sha2_password login
     "pydantic>=2.5.0",
     "click>=8.1.0",
 ]

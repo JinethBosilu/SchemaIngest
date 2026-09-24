@@ -1,6 +1,6 @@
 # SchemaIngest
 
-**A "gitingest"-style tool for databases.** Browse your Postgres schema in a web UI (tables,
+**A "gitingest"-style tool for databases.** Browse your PostgreSQL, MySQL or MariaDB schema in a web UI (tables,
 columns, keys, indexes and an interactive relationship diagram), and copy a compact,
 token-efficient description of it for an AI. Your credentials never leave your machine.
 
@@ -23,8 +23,8 @@ schemaingest agent
 ```
 
 The terminal shows a 6-digit **pairing code**. Open
-<https://jinethbosilu.github.io/SchemaIngest/>, enter the code, then enter your Postgres
-connection details. They go only to the agent on `localhost`.
+<https://jinethbosilu.github.io/SchemaIngest/>, enter the code, then pick your database engine
+and enter its connection details. They go only to the agent on `localhost`.
 
 Chrome may ask whether the page can access devices on your local network. Allow it: that
 is the browser checking before a public site talks to the agent on `127.0.0.1`.
@@ -37,9 +37,15 @@ schemaingest pull --conn "postgresql://user:pass@localhost:5432/mydb" --out sche
 
 # Compact text, ready to paste into an AI
 schemaingest pull --conn "postgresql://user:pass@localhost:5432/mydb" --out schema.txt --format txt
+
+# MySQL or MariaDB: the scheme picks the engine
+schemaingest pull --conn "mysql://user:pass@localhost:3306/mydb" --out schema.txt --format txt
 ```
 
-`--schema` picks a schema other than `public`.
+For PostgreSQL, `--schema` picks a schema other than `public`. In MySQL a database is a
+schema, so the database in the connection string is the one introspected. MySQL
+connection strings accept `?ssl-mode=` with MySQL's values (`DISABLED`, `PREFERRED`,
+`REQUIRED`, `VERIFY_CA`, `VERIFY_IDENTITY`).
 
 ## Security
 

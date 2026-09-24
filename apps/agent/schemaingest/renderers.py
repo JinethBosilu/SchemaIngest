@@ -34,6 +34,9 @@ def render_schema_txt(pack: SchemaPack) -> str:
     # Header
     lines.append(f"# Database: {pack.meta.dbName}")
     lines.append(f"# Schema: {pack.meta.schema_}")
+    if pack.meta.dbVersion:
+        # Tells the reader which SQL dialect to write.
+        lines.append(f"# Server: {pack.meta.dbVersion}")
     lines.append(f"# Generated: {pack.meta.generatedAt}")
     lines.append("")
 

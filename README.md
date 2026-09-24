@@ -1,6 +1,6 @@
 # SchemaIngest
 
-**A "gitingest-like" experience for databases.** Introspect your Postgres schema through a web UI — without credentials ever leaving your machine.
+**A "gitingest-like" experience for databases.** Introspect your **PostgreSQL** or **MySQL / MariaDB** schema through a web UI — without credentials ever leaving your machine.
 
 ![Architecture](https://img.shields.io/badge/architecture-local--first-6366f1?style=flat-square)
 ![Python](https://img.shields.io/badge/agent-Python_3.10+-10b981?style=flat-square)
@@ -14,14 +14,14 @@
 │   GitHub Pages Web UI   │◄──JSON──►│   Local Agent (Python)   │
 │   (your browser)        │  localhost│   127.0.0.1:8420         │
 │                         │  only    │                          │
-│   No credentials here   │          │   Connects to Postgres   │
+│   No credentials here   │          │   Connects to your DB    │
 └─────────────────────────┘          └─────────┬────────────────┘
                                                │
                                                ▼
-                                     ┌──────────────────┐
-                                     │   Your Postgres   │
-                                     │   Database        │
-                                     └──────────────────┘
+                                     ┌──────────────────────┐
+                                     │  PostgreSQL, MySQL   │
+                                     │  or MariaDB          │
+                                     └──────────────────────┘
 ```
 
 **Security model:** The web UI (hosted on GitHub Pages) communicates only with the agent running on `localhost`. Your database credentials never leave your machine.
@@ -65,7 +65,7 @@ You'll see a **6-digit pairing code** in your terminal:
 Go to **https://jinethbosilu.github.io/SchemaIngest/**
 
 1. Enter the **pairing code** from your terminal.
-2. Enter your **Postgres connection** details and schema (sent only to localhost).
+2. Pick **PostgreSQL** or **MySQL / MariaDB** and enter the connection details (sent only to localhost).
 3. Browse your schema: tables, columns, keys and indexes, plus the **Diagram** tab.
 4. Click **"Copy for AI"** to copy a token-efficient schema description.
 
@@ -82,9 +82,18 @@ schemaingest pull --conn "postgresql://user:pass@localhost:5432/mydb" --out sche
 
 # Compact text for pasting into an AI
 schemaingest pull --conn "postgresql://user:pass@localhost:5432/mydb" --out schema.txt --format txt
+
+# MySQL or MariaDB: the scheme picks the engine
+schemaingest pull --conn "mysql://user:pass@localhost:3306/mydb" --out schema.txt --format txt
 ```
 
-`--schema` picks a schema other than `public`.
+For PostgreSQL, `--schema` picks a schema other than `public`. In MySQL a database is a
+schema, so the database in the connection string is the one introspected.
+
+MySQL connection strings take one option, `ssl-mode`, with MySQL's values: `DISABLED`,
+`PREFERRED` (the default), `REQUIRED` (encrypted), and `VERIFY_CA` / `VERIFY_IDENTITY`
+(encrypted, certificate checked against the system's trusted CAs):
+`mysql://user:pass@db.example.com/mydb?ssl-mode=VERIFY_IDENTITY`.
 
 ---
 
@@ -92,9 +101,10 @@ schemaingest pull --conn "postgresql://user:pass@localhost:5432/mydb" --out sche
 
 | Feature | Description |
 |---------|-------------|
+| **Databases** | PostgreSQL, MySQL 8 and MariaDB |
 | **Schema Introspection** | Tables, columns, types, defaults, nullability |
 | **Keys & Constraints** | Primary keys, foreign keys (composite included), unique, check constraints |
-| **Indexes** | Key columns (expressions included), uniqueness |
+| **Indexes** | Key columns (expressions and prefixes included), uniqueness |
 | **Diagram: Table view** | The selected table in the middle, what references it on the left, what it references on the right, with the joining columns on every card |
 | **Diagram: Graph view** | The same neighbourhood as a ring coloured by direction, plus the references among the neighbours |
 | **Copy for AI** | One-click copy of compact, token-efficient schema text |
@@ -115,9 +125,10 @@ cd apps/agent
 pip install -e ".[dev]"
 schemaingest agent
 
-# Tests. The Postgres integration tests run when SCHEMAINGEST_TEST_DSN is set.
+# Tests. The integration tests run against real servers when these are set;
+# SCHEMAINGEST_TEST_MYSQL_DSN takes a comma-separated list (MySQL, MariaDB, ...).
 pytest
-SCHEMAINGEST_TEST_DSN=postgresql://postgres:postgres@localhost:5432/postgres pytest
+SCHEMAINGEST_TEST_DSN=postgresql://postgres:postgres@localhost:5432/postgres SCHEMAINGEST_TEST_MYSQL_DSN=mysql://root:root@127.0.0.1:3306/ pytest
 ```
 
 ### Web UI (React)
@@ -164,7 +175,7 @@ SchemaIngest/
 ├── packages/
 │   └── schema-pack/     # Shared JSON Schema contract
 ├── .github/workflows/
-│   ├── ci.yml           # Agent tests (with Postgres) and web build
+│   ├── ci.yml           # Agent tests (Postgres, MySQL, MariaDB) and web build
 │   ├── publish.yml      # PyPI release on a v* tag
 │   └── web-deploy.yml   # GitHub Pages deployment
 └── README.md

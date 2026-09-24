@@ -28,11 +28,35 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
     defaults:
       run:
         working-directory: apps/agent
     env:
       SCHEMAINGEST_TEST_DSN: postgresql://postgres:postgres@localhost:5432/postgres
+      # Every MySQL test runs against each server listed.
+      SCHEMAINGEST_TEST_MYSQL_DSN: mysql://root:root@127.0.0.1:3306/,mysql://root:root@127.0.0.1:3307/
     steps:
       - uses: actions/checkout@v4
 
