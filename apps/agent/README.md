@@ -26,8 +26,17 @@ The terminal shows a 6-digit **pairing code**. Open
 <https://jinethbosilu.github.io/SchemaIngest/>, enter the code, then pick your database engine
 and enter its connection details. They go only to the agent on `localhost`.
 
-Chrome may ask whether the page can access devices on your local network. Allow it: that
-is the browser checking before a public site talks to the agent on `127.0.0.1`.
+Chrome asks whether the page may access your local network. Allow it: that is the browser
+checking before a public site talks to the agent on `127.0.0.1`. If you dismissed it, the
+page says the browser is blocking it: click the icon left of the address bar → **Site
+settings** → **Local network access** → **Allow**.
+
+## Relationships
+
+Relationships come from declared foreign keys. For databases that declare none (MyISAM
+tables, or apps that only use names like `user_id`), the agent also infers links from
+column names: `<name>_id` to a table named after it with a single-column key of the same
+kind. Inferred links are always marked as inferred, and `pull --no-infer` leaves them out.
 
 ## Use it without the web UI
 

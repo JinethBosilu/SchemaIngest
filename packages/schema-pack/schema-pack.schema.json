@@ -79,7 +79,8 @@
                 "definition": { "type": ["string", "null"] }
               }
             }
-          }
+          },
+          "storageEngine": { "type": ["string", "null"], "description": "MySQL only, e.g. InnoDB or MyISAM (MyISAM keeps no foreign keys)." }
         }
       }
     },
@@ -93,7 +94,8 @@
           "fromColumn": { "type": "string" },
           "toTable": { "type": "string" },
           "toColumn": { "type": "string" },
-          "constraintName": { "type": "string" }
+          "constraintName": { "type": "string" },
+          "inferred": { "type": "boolean", "default": false, "description": "Guessed from column names, not declared in the database." }
         }
       }
     }

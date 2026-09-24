@@ -1,22 +1,26 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { detectAgent, pair } from '../api/agentClient';
+import { detectAgent, localNetworkPermission, pair } from '../api/agentClient';
 import { useAppStore } from '../store';
 
 export default function PairPage() {
     const navigate = useNavigate();
     const { setIsPaired } = useAppStore();
-    const [agentStatus, setAgentStatus] = useState<'detecting' | 'found' | 'not-found'>('detecting');
+    const [agentStatus, setAgentStatus] = useState<'detecting' | 'found' | 'not-found' | 'blocked'>('detecting');
     const [agentVersion, setAgentVersion] = useState('');
     const [code, setCode] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    // Look for the agent now, then every 3s until it answers.
+    // Look for the agent now, then every 3s until it answers. A failed fetch
+    // is either no agent or the browser refusing to reach 127.0.0.1 at all;
+    // the local-network permission tells the two apart where the browser says.
     useEffect(() => {
         let cancelled = false;
         let timer: number | undefined;
+        let permission: PermissionStatus | null = null;
         const check = async () => {
+            window.clearTimeout(timer);
             try {
                 const data = await detectAgent();
                 if (cancelled) return;
@@ -24,12 +28,22 @@ export default function PairPage() {
                 setAgentVersion(data.version);
             } catch {
                 if (cancelled) return;
-                setAgentStatus('not-found');
+                setAgentStatus(permission?.state === 'denied' ? 'blocked' : 'not-found');
                 timer = window.setTimeout(check, 3000);
             }
         };
-        check();
-        return () => { cancelled = true; window.clearTimeout(timer); };
+        localNetworkPermission().then(p => {
+            if (cancelled) return;
+            permission = p;
+            // Allowing access in site settings retries at once, not on the next poll.
+            if (p) p.onchange = check;
+            check();
+        });
+        return () => {
+            cancelled = true;
+            window.clearTimeout(timer);
+            if (permission) permission.onchange = null;
+        };
     }, []);
 
     const handlePair = async () => {
@@ -66,10 +80,22 @@ export default function PairPage() {
                         Looking for agent on localhost:8420…
                     </div>
                 )}
+                {agentStatus === 'blocked' && (
+                    <>
+                        <div className="pair-status warning" role="alert">
+                            🔒 Your browser is blocking this page from reaching the agent on your computer.
+                        </div>
+                        <ol className="pair-hint pair-steps">
+                            <li>Click the icon left of the address bar, then <b>Site settings</b>.</li>
+                            <li>Set <b>Local network access</b> to <b>Allow</b> (some versions call it <b>Apps on device</b>).</li>
+                            <li>Come back to this tab; it connects as soon as access is allowed.</li>
+                        </ol>
+                    </>
+                )}
                 {agentStatus === 'not-found' && (
                     <>
                         <div className="pair-status error">
-                            ❌ Agent not found. Make sure it's running on localhost:8420.
+                            ❌ Agent not found. Start it with <code>schemaingest agent</code>.
                         </div>
                         <p className="pair-hint">
                             Running but still not found? The browser may be blocking this page from

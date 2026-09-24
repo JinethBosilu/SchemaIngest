@@ -67,6 +67,18 @@ def test_introspect_passes_the_engine(client, pack, monkeypatch):
     assert seen[0].to_mysql_params()["database"] == "shop"
 
 
+def test_inferred_links_reach_the_browser(client, pack, monkeypatch):
+    from schemaingest.models import Relationship
+
+    pack.relationships.append(Relationship(fromTable="order_lines", fromColumn="line_id", toTable="orders",
+                                           toColumn="id", constraintName="inferred:line_id", inferred=True))
+    monkeypatch.setattr(endpoints, "introspect", lambda req: pack)
+    res = client.post("/introspect", json={"dbname": "x"},
+                      headers={"Authorization": f"Bearer {_token(client)}"})
+    rels = res.json()["relationships"]
+    assert [r["inferred"] for r in rels] == [False, False, True]
+
+
 def test_unknown_engine_is_rejected(client):
     res = client.post("/introspect", json={"engine": "oracle", "dbname": "x"},
                       headers={"Authorization": f"Bearer {_token(client)}"})

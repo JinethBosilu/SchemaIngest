@@ -54,6 +54,27 @@ export async function detectAgent(): Promise<{ status: string; version: string }
 }
 
 /**
+ * The browser's permission for this page to reach the agent on 127.0.0.1.
+ *
+ * Chrome gates a public site's requests to your own machine behind a "local
+ * network access" permission; while it is denied, fetch fails before anything
+ * is sent, which looks exactly like the agent not running. The permission's
+ * name has changed between Chrome versions, so both are tried. Null where the
+ * browser has no such permission or will not say (Firefox, Safari).
+ */
+export async function localNetworkPermission(): Promise<PermissionStatus | null> {
+    if (!navigator.permissions?.query) return null;
+    for (const name of ['loopback-network', 'local-network-access']) {
+        try {
+            return await navigator.permissions.query({ name: name as PermissionName });
+        } catch {
+            // Not a permission this browser knows; try the next name.
+        }
+    }
+    return null;
+}
+
+/**
  * Pair with the agent using the 6-digit code shown in the terminal.
  * On success, stores the session token for subsequent requests.
  */

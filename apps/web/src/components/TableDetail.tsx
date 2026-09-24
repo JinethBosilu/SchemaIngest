@@ -10,13 +10,15 @@ export default function TableDetail({ table, relationships }: TableDetailProps) 
     // One entry per foreign key: a composite key's columns share a constraint name.
     const tableRels = useMemo(() => {
         const byKey = new Map<string, { key: string; fromTable: string; toTable: string;
-                                        constraintName: string; from: string[]; to: string[] }>();
+                                        constraintName: string; inferred: boolean;
+                                        from: string[]; to: string[] }>();
         for (const r of relationships) {
             if (r.fromTable !== table.name && r.toTable !== table.name) continue;
             const key = `${r.fromTable}.${r.constraintName}`;
             let g = byKey.get(key);
             if (!g) {
-                g = { key, fromTable: r.fromTable, toTable: r.toTable, constraintName: r.constraintName, from: [], to: [] };
+                g = { key, fromTable: r.fromTable, toTable: r.toTable, constraintName: r.constraintName,
+                      inferred: !!r.inferred, from: [], to: [] };
                 byKey.set(key, g);
             }
             g.from.push(r.fromColumn);
@@ -98,7 +100,9 @@ export default function TableDetail({ table, relationships }: TableDetailProps) 
                                 <span className="idx-name">{r.fromTable}.{cols(r.from)}</span>
                                 <span style={{ color: 'var(--text-muted)' }}>→</span>
                                 <span className="idx-name">{r.toTable}.{cols(r.to)}</span>
-                                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>({r.constraintName})</span>
+                                <span style={{ fontSize: '0.7rem', color: r.inferred ? 'var(--warning)' : 'var(--text-muted)' }}>
+                                    ({r.inferred ? 'inferred from column name' : r.constraintName})
+                                </span>
                             </li>
                         ))}
                     </ul>

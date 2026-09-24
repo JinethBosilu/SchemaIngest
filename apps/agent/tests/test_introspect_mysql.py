@@ -64,6 +64,13 @@ FIXTURE_SQL = [
     """ALTER TABLE users ADD CONSTRAINT users_address_fkey
         FOREIGN KEY (default_address_id) REFERENCES addresses (id)""",
     "CREATE TABLE audit_log (note text, payload json)",
+    # MyISAM keeps no foreign keys: the declared one is discarded, and the
+    # link can only be inferred.
+    """CREATE TABLE comments (
+        id      int PRIMARY KEY,
+        user_id int,
+        CONSTRAINT comments_user_fkey FOREIGN KEY (user_id) REFERENCES users (id)
+    ) ENGINE=MyISAM""",
     # A view is not a table.
     "CREATE VIEW open_orders AS SELECT * FROM orders WHERE status = 'open'",
 ]
@@ -120,7 +127,7 @@ def test_meta(pack):
 
 def test_lists_base_tables_only(pack):
     assert [t.name for t in pack.tables] == [
-        "addresses", "audit_log", "categories", "order_lines", "orders", "regions", "users",
+        "addresses", "audit_log", "categories", "comments", "order_lines", "orders", "regions", "users",
     ]
     assert {t.schema_ for t in pack.tables} == {DB}
 
@@ -156,11 +163,11 @@ def test_composite_fk_pairs_columns_without_cross_product(pack):
 
 
 def test_self_reference_and_both_ways_pair(pack):
-    pairs = {(r.fromTable, r.fromColumn, r.toTable, r.toColumn) for r in pack.relationships}
+    pairs = {(r.fromTable, r.fromColumn, r.toTable, r.toColumn) for r in pack.relationships if not r.inferred}
     assert ("categories", "parent_id", "categories", "id") in pairs
     assert ("users", "default_address_id", "addresses", "id") in pairs
     assert ("addresses", "user_id", "users", "id") in pairs
-    assert len(pack.relationships) == 6
+    assert sum(not r.inferred for r in pack.relationships) == 6
 
 
 def test_indexes(server):
@@ -198,3 +205,12 @@ def test_schema_text_names_the_server(pack):
     txt = render_schema_txt(pack)
     assert f"# Server: {pack.meta.dbVersion}" in txt
     assert "order_lines.order_id -> orders.id (order_lines_order_fkey)" in txt
+
+
+def test_myisam_links_are_inferred(pack):
+    assert _table(pack, "comments").storageEngine == "MyISAM"
+    assert _table(pack, "orders").storageEngine == "InnoDB"
+    assert not _table(pack, "comments").constraints or all(
+        c.type != "FOREIGN KEY" for c in _table(pack, "comments").constraints)
+    inferred = [(r.fromTable, r.fromColumn, r.toTable, r.toColumn) for r in pack.relationships if r.inferred]
+    assert inferred == [("comments", "user_id", "users", "id")]
