@@ -295,6 +295,15 @@ body {
   color: var(--danger);
 }
 
+.pair-status.warning {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+.pair-status code {
+  font-family: var(--font-mono);
+}
+
 /* ─── Connect Page ───────────────────────────────────────── */
 .connect-page {
   display: flex;
@@ -738,6 +747,14 @@ body {
   line-height: 1.5;
   color: var(--text-muted);
   text-align: left;
+}
+
+.pair-steps {
+  padding-left: 20px;
+}
+
+.pair-steps li + li {
+  margin-top: 4px;
 }
 
 .pair-hint code {
