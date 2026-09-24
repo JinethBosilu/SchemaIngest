@@ -7,7 +7,7 @@ from schemaingest.renderers import render_erd_mermaid, render_schema_txt
 
 def test_schema_txt_lists_tables_columns_and_relationships(pack):
     txt = render_schema_txt(pack)
-    assert "# Database: shop" in txt
+    assert txt.startswith("# Database: shop\n# Schema: public\n# Server: PostgreSQL 16\n# Generated: ")
     assert "TABLE orders" in txt
     assert "  id integer NOT NULL PK" in txt
     assert "  order_id integer NOT NULL FK -> orders.id" in txt

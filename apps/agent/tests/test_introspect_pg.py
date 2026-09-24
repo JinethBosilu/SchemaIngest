@@ -59,7 +59,7 @@ CREATE TABLE categories (
 def pack():
     import psycopg2
 
-    from schemaingest.introspect import introspect_postgres
+    from schemaingest.introspect.postgres import introspect_postgres
 
     conn = psycopg2.connect(DSN)
     conn.autocommit = True
@@ -80,6 +80,8 @@ def _table(pack, name):
 def test_lists_tables(pack):
     assert [t.name for t in pack.tables] == ["categories", "order_lines", "orders", "regions"]
     assert pack.meta.schema_ == SCHEMA
+    assert pack.meta.engine == "postgresql"
+    assert pack.meta.dbVersion.startswith("PostgreSQL ")
 
 
 def test_primary_key_keeps_declared_order(pack):

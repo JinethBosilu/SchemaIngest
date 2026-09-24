@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
-from schemaingest.introspect import introspect_postgres
+from schemaingest.introspect import introspect
 from schemaingest.models import ConnectRequest, PairRequest, SchemaPack
 from schemaingest.renderers import render_erd_mermaid, render_schema_txt
 from schemaingest.security import (
@@ -19,7 +19,7 @@ from schemaingest import __version__
 router = APIRouter()
 
 
-# Handlers are plain `def`: psycopg2 blocks, so FastAPI runs them in its
+# Handlers are plain `def`: the database drivers block, so FastAPI runs them in its
 # threadpool instead of on the event loop.
 
 # ─── Health ───────────────────────────────────────────────────────────
@@ -44,7 +44,7 @@ def pair_start(body: PairRequest):
 def _do_introspect(req: ConnectRequest) -> SchemaPack:
     """Shared introspection helper."""
     try:
-        return introspect_postgres(req.to_dsn(), schema=req.schema_)
+        return introspect(req)
     except Exception as e:
         # Sanitise the error message to avoid leaking credentials
         raise ValueError(redact_password(str(e))) from None
