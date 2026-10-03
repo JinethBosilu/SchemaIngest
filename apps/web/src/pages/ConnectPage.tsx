@@ -91,114 +91,123 @@ export default function ConnectPage() {
     const submitOnEnter = (e: KeyboardEvent) => e.key === 'Enter' && canSubmit && handleSubmit();
 
     return (
-        <div className="connect-page">
-            <div className="card connect-card">
-                <div className="card-header">
-                    <h2>{engine === 'mysql' ? '🐬' : '🐘'} Connect to your database</h2>
-                    <p>Your credentials are sent only to the local agent — never to any server.</p>
+        <div className="form-page">
+            <section className="sheet">
+                <div className="sheet-head">
+                    <h1>Connect to your database</h1>
+                    <p>Your credentials go only to the agent on this computer, never to a server.</p>
                 </div>
 
-                <div className="toggle-group" role="tablist" aria-label="Database engine">
-                    {(Object.keys(ENGINES) as Engine[]).map(k => (
-                        <button
-                            key={k}
-                            role="tab"
-                            aria-selected={engine === k}
-                            className={engine === k ? 'active' : ''}
-                            onClick={() => switchEngine(k)}
-                        >
-                            {ENGINES[k].label}
-                        </button>
-                    ))}
-                </div>
-
-                <div className="toggle-group">
-                    <button
-                        className={mode === 'string' ? 'active' : ''}
-                        onClick={() => setMode('string')}
-                    >
-                        Connection String
-                    </button>
-                    <button
-                        className={mode === 'fields' ? 'active' : ''}
-                        onClick={() => setMode('fields')}
-                    >
-                        Individual Fields
-                    </button>
-                </div>
-
-                {mode === 'string' ? (
-                    <div className="form-group">
-                        <label>Connection String</label>
-                        <input
-                            className="form-input mono"
-                            placeholder={eng.placeholder}
-                            value={connString}
-                            onChange={e => onConnString(e.target.value)}
-                            onKeyDown={submitOnEnter}
-                            autoFocus
-                        />
+                <div className="sheet-body">
+                    <div className="segmented" role="tablist" aria-label="Database engine">
+                        {(Object.keys(ENGINES) as Engine[]).map(k => (
+                            <button
+                                key={k}
+                                type="button"
+                                role="tab"
+                                aria-selected={engine === k}
+                                className={engine === k ? 'active' : ''}
+                                onClick={() => switchEngine(k)}
+                            >
+                                {ENGINES[k].label}
+                            </button>
+                        ))}
                     </div>
-                ) : (
-                    <>
-                        <div className="form-row">
-                            <div className="form-group">
-                                <label>Host</label>
-                                <input className="form-input" value={host} onChange={e => setHost(e.target.value)} />
-                            </div>
-                            <div className="form-group">
-                                <label>Port</label>
-                                <input className="form-input" value={port} onChange={e => setPort(e.target.value)} />
-                            </div>
-                        </div>
+
+                    <div className="segmented" role="tablist" aria-label="How to enter the connection">
+                        {([['string', 'Connection string'], ['fields', 'Separate fields']] as const).map(([k, label]) => (
+                            <button
+                                key={k}
+                                type="button"
+                                role="tab"
+                                aria-selected={mode === k}
+                                className={mode === k ? 'active' : ''}
+                                onClick={() => setMode(k)}
+                            >
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {mode === 'string' ? (
                         <div className="form-group">
-                            <label>Database Name</label>
+                            <label htmlFor="conn">Connection string</label>
                             <input
-                                className="form-input"
-                                placeholder="mydb"
-                                value={dbname}
-                                onChange={e => setDbname(e.target.value)}
+                                id="conn"
+                                className="form-input mono"
+                                placeholder={eng.placeholder}
+                                value={connString}
+                                onChange={e => onConnString(e.target.value)}
                                 onKeyDown={submitOnEnter}
                                 autoFocus
                             />
                         </div>
-                        <div className="form-row">
-                            <div className="form-group">
-                                <label>User</label>
-                                <input className="form-input" placeholder={eng.user} value={user} onChange={e => setUser(e.target.value)} />
+                    ) : (
+                        <>
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label htmlFor="host">Host</label>
+                                    <input id="host" className="form-input mono" value={host} onChange={e => setHost(e.target.value)} />
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="port">Port</label>
+                                    <input id="port" className="form-input mono" inputMode="numeric" value={port} onChange={e => setPort(e.target.value)} />
+                                </div>
                             </div>
                             <div className="form-group">
-                                <label>Password</label>
-                                <input className="form-input" type="password" value={password} onChange={e => setPassword(e.target.value)} />
+                                <label htmlFor="dbname">Database name</label>
+                                <input
+                                    id="dbname"
+                                    className="form-input mono"
+                                    placeholder="mydb"
+                                    value={dbname}
+                                    onChange={e => setDbname(e.target.value)}
+                                    onKeyDown={submitOnEnter}
+                                    autoFocus
+                                />
                             </div>
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label htmlFor="user">User</label>
+                                    <input id="user" className="form-input mono" placeholder={eng.user} value={user} onChange={e => setUser(e.target.value)} />
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="password">Password</label>
+                                    <input id="password" className="form-input" type="password" value={password} onChange={e => setPassword(e.target.value)} />
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    {engine === 'postgresql' && (
+                        <div className="form-group">
+                            <label htmlFor="schema">Schema</label>
+                            <input
+                                id="schema"
+                                className="form-input mono"
+                                placeholder="public"
+                                value={schema}
+                                onChange={e => setSchema(e.target.value)}
+                                onKeyDown={submitOnEnter}
+                            />
                         </div>
-                    </>
-                )}
+                    )}
 
-                {engine === 'postgresql' && (
-                    <div className="form-group">
-                        <label>Schema</label>
-                        <input
-                            className="form-input mono"
-                            placeholder="public"
-                            value={schema}
-                            onChange={e => setSchema(e.target.value)}
-                            onKeyDown={submitOnEnter}
-                        />
+                    {error && <div className="note alert" role="alert">{error}</div>}
+
+                    <div className="form-actions">
+                        <button
+                            type="button"
+                            className="btn btn-primary btn-block"
+                            onClick={handleSubmit}
+                            disabled={!canSubmit || loading}
+                        >
+                            {loading && <span className="spinner" aria-hidden="true"></span>}
+                            {loading ? 'Reading schema…' : 'Read schema'}
+                        </button>
                     </div>
-                )}
-
-                {error && <div className="error-msg" style={{ marginBottom: 12 }}>{error}</div>}
-
-                <button
-                    className="btn btn-primary"
-                    style={{ width: '100%' }}
-                    onClick={handleSubmit}
-                    disabled={!canSubmit || loading}
-                >
-                    {loading ? <><span className="spinner"></span> Introspecting…</> : '🔍 Introspect Schema'}
-                </button>
-            </div>
+                </div>
+            </section>
         </div>
     );
 }

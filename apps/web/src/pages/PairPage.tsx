@@ -62,82 +62,87 @@ export default function PairPage() {
     };
 
     return (
-        <div className="pair-page">
-            <div className="card pair-card">
-                <div className="icon">🔗</div>
-                <div className="card-header">
-                    <h2>Connect to Agent</h2>
+        <div className="form-page">
+            <section className="sheet">
+                <div className="sheet-head">
+                    <h1>Pair with the agent</h1>
                     <p>
-                        Run <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--info)' }}>schemaingest agent</code> on your machine,
-                        then enter the 6-digit pairing code below.
+                        Run <code>schemaingest agent</code> on this computer, then enter the
+                        6-digit code it prints.
                     </p>
                 </div>
 
-                {/* Agent detection status */}
-                {agentStatus === 'detecting' && (
-                    <div className="pair-status detecting">
-                        <span className="spinner" style={{ marginRight: 8 }}></span>
-                        Looking for agent on localhost:8420…
-                    </div>
-                )}
-                {agentStatus === 'blocked' && (
-                    <>
-                        <div className="pair-status warning" role="alert">
-                            🔒 Your browser is blocking this page from reaching the agent on your computer.
+                <div className="sheet-body">
+                    {agentStatus === 'detecting' && (
+                        <div className="note" role="status">
+                            <span className="spinner" aria-hidden="true"></span>
+                            Looking for the agent on localhost:8420…
                         </div>
-                        <ol className="pair-hint pair-steps">
-                            <li>Click the icon left of the address bar, then <b>Site settings</b>.</li>
-                            <li>Set <b>Local network access</b> to <b>Allow</b> (some versions call it <b>Apps on device</b>).</li>
-                            <li>Come back to this tab; it connects as soon as access is allowed.</li>
-                        </ol>
-                    </>
-                )}
-                {agentStatus === 'not-found' && (
-                    <>
-                        <div className="pair-status error">
-                            ❌ Agent not found. Start it with <code>schemaingest agent</code>.
-                        </div>
-                        <p className="pair-hint">
-                            Running but still not found? The browser may be blocking this page from
-                            reaching <code>127.0.0.1</code>. In Chrome or Edge, allow <b>local network
-                            access</b> for this site (the icon left of the address bar). Safari may block an
-                            HTTPS page from calling a local agent at all; if so, use Chrome, Edge or Firefox.
-                        </p>
-                    </>
-                )}
-                {agentStatus === 'found' && (
-                    <>
-                        <div className="pair-status success">
-                            ✅ Agent detected (v{agentVersion})
-                        </div>
+                    )}
+                    {agentStatus === 'blocked' && (
+                        <>
+                            <div className="note caution" role="alert">
+                                Your browser is blocking this page from reaching the agent on this computer.
+                            </div>
+                            <ol className="hint">
+                                <li>Click the icon left of the address bar, then <b>Site settings</b>.</li>
+                                <li>Set <b>Local network access</b> to <b>Allow</b> (some versions call it <b>Apps on device</b>).</li>
+                                <li>Come back to this tab. It connects as soon as access is allowed.</li>
+                            </ol>
+                        </>
+                    )}
+                    {agentStatus === 'not-found' && (
+                        <>
+                            <div className="note alert" role="status">
+                                No agent on localhost:8420. Start it with <code>schemaingest agent</code>; this
+                                page checks again every few seconds.
+                            </div>
+                            <p className="hint">
+                                Running but still not found? The browser may be blocking this page from
+                                reaching <code>127.0.0.1</code>. In Chrome or Edge, allow <b>local network
+                                access</b> for this site (the icon left of the address bar). Safari may block an
+                                HTTPS page from calling a local agent at all; if so, use Chrome, Edge or Firefox.
+                            </p>
+                        </>
+                    )}
+                    {agentStatus === 'found' && (
+                        <>
+                            <div className="note ok" role="status">Found agent v{agentVersion}.</div>
 
-                        <div className="form-group" style={{ marginTop: 20 }}>
-                            <label>Pairing Code</label>
-                            <input
-                                className="form-input pair-code-input"
-                                type="text"
-                                maxLength={6}
-                                placeholder="000000"
-                                value={code}
-                                onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                                onKeyDown={e => e.key === 'Enter' && handlePair()}
-                                autoFocus
-                            />
-                        </div>
+                            <div className="form-group form-actions">
+                                <label htmlFor="pair-code">Pairing code</label>
+                                <input
+                                    id="pair-code"
+                                    className="form-input pair-code-input"
+                                    type="text"
+                                    inputMode="numeric"
+                                    autoComplete="one-time-code"
+                                    maxLength={6}
+                                    placeholder="000000"
+                                    value={code}
+                                    onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                    onKeyDown={e => e.key === 'Enter' && handlePair()}
+                                    autoFocus
+                                />
+                            </div>
 
-                        {error && <div className="error-msg">{error}</div>}
+                            {error && <div className="note alert" role="alert">{error}</div>}
 
-                        <button
-                            className="btn btn-primary"
-                            style={{ width: '100%', marginTop: 12 }}
-                            onClick={handlePair}
-                            disabled={code.length !== 6 || loading}
-                        >
-                            {loading ? <span className="spinner"></span> : '🔑 Pair'}
-                        </button>
-                    </>
-                )}
-            </div>
+                            <div className="form-actions">
+                                <button
+                                    type="button"
+                                    className="btn btn-primary btn-block"
+                                    onClick={handlePair}
+                                    disabled={code.length !== 6 || loading}
+                                >
+                                    {loading && <span className="spinner" aria-hidden="true"></span>}
+                                    {loading ? 'Pairing…' : 'Pair'}
+                                </button>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </section>
         </div>
     );
 }
