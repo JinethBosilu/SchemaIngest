@@ -41,6 +41,9 @@ export function tableRefs(relationships: Relationship[], table: string): TableRe
             inKeys.add(`${r.fromTable}.${r.constraintName}`);
         }
     }
+    // Sorted by table then column, so a long list can be scanned by eye.
+    const order = (a: ColumnRef, b: ColumnRef) => a.table.localeCompare(b.table) || a.column.localeCompare(b.column);
+    for (const list of [...out.values(), ...inb.values()]) list.sort(order);
     return { out, in: inb, outCount: outKeys.size, inCount: inKeys.size };
 }
 

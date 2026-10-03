@@ -30,7 +30,9 @@
   font-size: 16px;
   font-weight: 600;
   line-height: 1.3;
-  word-break: break-word;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .db-meta dl {
@@ -94,7 +96,9 @@
 
 .table-list .nm {
   min-width: 0;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .table-list .n {
@@ -125,7 +129,10 @@
   font-weight: 500;
   line-height: 1.15;
   letter-spacing: -0.02em;
-  overflow-wrap: anywhere;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   align-self: end;
 }
 
@@ -243,7 +250,7 @@
   font-family: var(--font-mono);
   font-weight: 500;
   color: var(--ink);
-  overflow-wrap: anywhere;
+  white-space: nowrap;
 }
 
 .cols .ty {
@@ -264,10 +271,13 @@
 }
 
 .cols .df {
+  max-width: 30ch;
   font-family: var(--font-mono);
   font-size: 13px;
   color: var(--pencil);
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .cols td.inb {
@@ -277,7 +287,13 @@
   color: var(--pencil);
 }
 
-.cols td.inb .arrow { margin-right: 6px; }
+/* The label holds the left edge; the references stack beside it, one a line. */
+.inb-grid {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0 16px;
+  align-items: baseline;
+}
 
 /* A reference you can follow: ink, underlined; dashed when only guessed. */
 .ref-link {
@@ -297,13 +313,39 @@
 .ref-link.inferred { text-decoration-style: dashed; text-decoration-color: var(--erd-rim); }
 .ref-link .col { color: var(--graphite); }
 
-.ref-list {
-  display: inline;
+.ref-rows {
+  list-style: none;
 }
 
-.ref-list > * + *::before {
-  content: ', ';
+.ref-rows li {
+  white-space: nowrap;
+  line-height: 1.7;
+}
+
+.ref-rows .via {
+  margin-left: 12px;
+  font-size: 12px;
   color: var(--pencil);
+}
+
+.ref-more {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--graphite);
+  text-decoration: underline;
+  text-decoration-color: var(--rule);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.ref-more:hover { color: var(--ink); text-decoration-color: var(--ink); }
+
+/* A long name or type scrolls inside the sheet; it never wraps. */
+.cols-scroll {
+  overflow-x: auto;
 }
 
 .sect {
@@ -374,6 +416,9 @@
   .cols td.df { grid-area: df; }
   .cols td.rf { grid-area: rf; }
   .cols td.inb { grid-area: inb; }
+  .cols td.nmc { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .inb-grid { grid-template-columns: 1fr; }
+  .ref-rows .via { display: none; }
   /* Without the header row, a bare "yes" would say nothing. */
   .cols td.nl .yes { font-size: 0; }
   .cols td.nl .yes::after { content: 'nullable'; font-size: 12px; }

@@ -52,7 +52,7 @@ export default function SchemaPage() {
         <div className="schema-page">
             <aside className="db-side" aria-label="Tables">
                 <div className="db-meta">
-                    <h2>{meta.dbName}</h2>
+                    <h2 title={meta.dbName}>{meta.dbName}</h2>
                     <dl>
                         {meta.dbVersion && <><dt>Server</dt><dd>{meta.dbVersion}</dd></>}
                         {/* In MySQL the schema is the database, already named above. */}

@@ -1,7 +1,9 @@
 /* The look is an engineer's data-dictionary sheet: cool paper, ink-blue
    type and hairline rules. Colour carries meaning only - ink for things you
-   can act on, ochre for primary keys, the erd pair for direction. */
+   can act on, ochre for primary keys, the erd pair for direction.
+   The dark theme is the same drawing as a blueprint, further down. */
 :root {
+  color-scheme: light;
   --paper: #eef2f5;
   --sheet: #fbfcfd;
   --rule: #c9d3dd;
@@ -41,4 +43,72 @@
   --erd-key: var(--key);
   --erd-canvas: var(--sheet);
   --erd-grid: #e9eef3;
+}
+
+/* Night blueprint. Written twice because CSS cannot share one block between
+   "the OS prefers dark" and "the switch says dark"; keep the two identical. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --paper: #0f1b2a;
+    --sheet: #15243a;
+    --rule: #2c4060;
+    --rule-faint: #213350;
+    --ink: #dce6f2;
+    --ink-deep: #ffffff;
+    --ink-wash: #1c2e48;
+    --graphite: #a9b8ca;
+    --pencil: #8598b0;
+    --key: #e2b25c;
+    --alert: #f09494;
+    --alert-wash: #3a2232;
+    --ok: #74c7a3;
+    --ok-wash: #183a3a;
+    --caution: #e2b25c;
+    --caution-wash: #33302f;
+
+    --erd-out: #78aeea;
+    --erd-in: #5fc4af;
+    --erd-both: #b59ee0;
+    --erd-near: #53698a;
+    --erd-out-soft: #9cc4f0;
+    --erd-in-soft: #86d4c3;
+    --erd-out-rim: #3b6290;
+    --erd-in-rim: #2f6a62;
+    --erd-focus-bg: #1d3150;
+    --erd-rim: #7d91ab;
+    --erd-grid: #1a2b44;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --paper: #0f1b2a;
+  --sheet: #15243a;
+  --rule: #2c4060;
+  --rule-faint: #213350;
+  --ink: #dce6f2;
+  --ink-deep: #ffffff;
+  --ink-wash: #1c2e48;
+  --graphite: #a9b8ca;
+  --pencil: #8598b0;
+  --key: #e2b25c;
+  --alert: #f09494;
+  --alert-wash: #3a2232;
+  --ok: #74c7a3;
+  --ok-wash: #183a3a;
+  --caution: #e2b25c;
+  --caution-wash: #33302f;
+
+  --erd-out: #78aeea;
+  --erd-in: #5fc4af;
+  --erd-both: #b59ee0;
+  --erd-near: #53698a;
+  --erd-out-soft: #9cc4f0;
+  --erd-in-soft: #86d4c3;
+  --erd-out-rim: #3b6290;
+  --erd-in-rim: #2f6a62;
+  --erd-focus-bg: #1d3150;
+  --erd-rim: #7d91ab;
+  --erd-grid: #1a2b44;
 }
