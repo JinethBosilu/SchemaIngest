@@ -8,6 +8,33 @@ html, body, #root {
   height: 100%;
 }
 
+/* Scrollbars as thin rules in the sheet's own colours, light or dark.
+   Chromium and Safari get the webkit rules, which can drop the arrow buttons;
+   setting the standard properties there would switch those rules off, so
+   only browsers without them (Firefox) get the standard ones. */
+html {
+  /* The centred forms do not jump sideways when the page starts to scroll. */
+  scrollbar-gutter: stable;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-color: var(--scroll-thumb) transparent;
+    scrollbar-width: thin;
+  }
+}
+
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-button { display: none; }
+::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border: 3px solid transparent;
+  border-radius: 6px;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover, ::-webkit-scrollbar-thumb:active { background-color: var(--scroll-thumb-hover); }
+
 body {
   font-family: var(--font-sans);
   font-size: 14px;
