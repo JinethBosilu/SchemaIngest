@@ -58,6 +58,7 @@
 .table-list {
   list-style: none;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   margin: 0 -8px;
   padding: 0 8px 8px;
 }
@@ -346,6 +347,7 @@
 /* A long name or type scrolls inside the sheet; it never wraps. */
 .cols-scroll {
   overflow-x: auto;
+  padding-bottom: 4px;
 }
 
 .sect {
@@ -377,11 +379,13 @@
 .idx .on { font-family: var(--font-mono); font-size: 13px; color: var(--graphite); }
 .idx .u { width: 1%; font-size: 13px; color: var(--graphite); text-align: right; white-space: nowrap; }
 
-/* ─── Narrow screens ────────────────────────────────────── */
-@media (max-width: 860px) {
-  .schema-page { grid-template-columns: 1fr; }
-  .db-side { position: static; max-height: none; }
-  .table-list { max-height: 260px; }
+/* The title block stacks when its own sheet is narrow, whatever the window:
+   the sidebar takes a share of the width before the page itself is small. */
+.schema-page > .sheet {
+  container-type: inline-size;
+}
+
+@container (max-width: 760px) {
   .titleblock { grid-template-columns: 1fr; }
   .titleblock dl {
     grid-auto-flow: row;
@@ -391,6 +395,13 @@
   }
   .titleblock dl > div { padding: 8px 16px 10px; }
   .titleblock dl > div + div { border-left: 0; }
+}
+
+/* ─── Narrow screens ────────────────────────────────────── */
+@media (max-width: 860px) {
+  .schema-page { grid-template-columns: 1fr; }
+  .db-side { position: static; max-height: none; }
+  .table-list { max-height: 260px; }
 }
 
 /* Under 720px a column becomes a small card of lines: name and nullability

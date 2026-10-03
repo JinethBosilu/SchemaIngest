@@ -43,6 +43,9 @@
   --erd-key: var(--key);
   --erd-canvas: var(--sheet);
   --erd-grid: #e9eef3;
+
+  --scroll-thumb: #b7c3cf;
+  --scroll-thumb-hover: var(--graphite);
 }
 
 /* Night blueprint. Written twice because CSS cannot share one block between
@@ -78,6 +81,8 @@
     --erd-focus-bg: #1d3150;
     --erd-rim: #7d91ab;
     --erd-grid: #1a2b44;
+    --scroll-thumb: #33496b;
+    --scroll-thumb-hover: #7d91ab;
   }
 }
 
@@ -111,4 +116,6 @@
   --erd-focus-bg: #1d3150;
   --erd-rim: #7d91ab;
   --erd-grid: #1a2b44;
+  --scroll-thumb: #33496b;
+  --scroll-thumb-hover: #7d91ab;
 }
