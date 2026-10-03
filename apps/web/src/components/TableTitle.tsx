@@ -15,7 +15,7 @@ export default function TableTitle({ table, relationships }: TableTitleProps) {
 
     return (
         <header className="titleblock">
-            <h1>{table.name}</h1>
+            <h1 title={table.name}>{table.name}</h1>
             <dl>
                 <div><dt>Schema</dt><dd className="mono">{table.schema}</dd></div>
                 <div><dt>Columns</dt><dd>{table.columns.length}</dd></div>

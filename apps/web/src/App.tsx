@@ -2,6 +2,7 @@ import { HashRouter, Routes, Route, Navigate, useNavigate } from 'react-router-d
 import PairPage from './pages/PairPage';
 import ConnectPage from './pages/ConnectPage';
 import SchemaPage from './pages/SchemaPage';
+import ThemeSwitch from './components/ThemeSwitch';
 import { clearSession } from './api/agentClient';
 import { useAppStore } from './store';
 
@@ -27,14 +28,17 @@ function AppContent() {
                     </svg>
                     SchemaIngest
                 </div>
-                <div className="agent-status">
-                    <span className={`status-dot ${isPaired ? 'connected' : ''}`} aria-hidden="true"></span>
-                    <span className="label">{isPaired ? 'Agent paired' : 'No agent paired'}</span>
-                    {isPaired && (
-                        <button type="button" className="btn btn-secondary btn-sm" onClick={handleDisconnect}>
-                            Disconnect
-                        </button>
-                    )}
+                <div className="header-end">
+                    <ThemeSwitch />
+                    <div className="agent-status">
+                        <span className={`status-dot ${isPaired ? 'connected' : ''}`} aria-hidden="true"></span>
+                        <span className="label">{isPaired ? 'Agent paired' : 'No agent paired'}</span>
+                        {isPaired && (
+                            <button type="button" className="btn btn-secondary btn-sm" onClick={handleDisconnect}>
+                                Disconnect
+                            </button>
+                        )}
+                    </div>
                 </div>
             </header>
 

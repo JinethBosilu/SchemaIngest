@@ -38,7 +38,7 @@ export default function TableList({ tables, selected, onSelect }: TableListProps
                                 type="button"
                                 aria-current={t.name === selected}
                                 onClick={() => onSelect(t.name)}
-                                title={`${t.columns.length} columns`}
+                                title={`${t.name}, ${t.columns.length} columns`}
                             >
                                 <span className="nm">{t.name}</span>
                                 <span className="n">{t.columns.length}</span>

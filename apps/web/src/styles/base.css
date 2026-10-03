@@ -69,6 +69,30 @@ code, .mono {
   flex: none;
 }
 
+.header-end {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.theme-switch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--graphite);
+  cursor: pointer;
+}
+
+.theme-switch:hover {
+  border-color: var(--rule);
+  color: var(--ink);
+}
+
 .agent-status {
   display: flex;
   align-items: center;
