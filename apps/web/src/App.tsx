@@ -18,12 +18,20 @@ function AppContent() {
     return (
         <div className="app">
             <header className="app-header">
-                <h1>⚡ SchemaIngest</h1>
-                <div className="status-badge">
-                    <span className={`status-dot ${isPaired ? 'connected' : ''}`}></span>
-                    <span>{isPaired ? 'Agent connected' : 'Not connected'}</span>
+                <div className="brand">
+                    {/* A table with its header row filled in: the thing this tool reads. */}
+                    <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+                        <rect x="1" y="1" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                        <rect x="1" y="1" width="18" height="6" fill="currentColor" />
+                        <path d="M1 13h18M7 7v12" stroke="currentColor" strokeWidth="1.5" />
+                    </svg>
+                    SchemaIngest
+                </div>
+                <div className="agent-status">
+                    <span className={`status-dot ${isPaired ? 'connected' : ''}`} aria-hidden="true"></span>
+                    <span className="label">{isPaired ? 'Agent paired' : 'No agent paired'}</span>
                     {isPaired && (
-                        <button className="btn btn-secondary btn-sm" style={{ marginLeft: 8 }} onClick={handleDisconnect}>
+                        <button type="button" className="btn btn-secondary btn-sm" onClick={handleDisconnect}>
                             Disconnect
                         </button>
                     )}

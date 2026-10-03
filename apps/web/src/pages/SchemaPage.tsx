@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import TableList from '../components/TableList';
+import TableTitle from '../components/TableTitle';
 import TableDetail from '../components/TableDetail';
 import ErdView, { type ErdMode } from '../components/ErdView';
 import CopyButton from '../components/CopyButton';
@@ -8,6 +9,11 @@ import { renderSchemaText } from '../lib/schemaText';
 import { useAppStore } from '../store';
 
 type Tab = 'columns' | 'diagram';
+
+const TABS: { id: Tab; label: string }[] = [
+    { id: 'columns', label: 'Columns' },
+    { id: 'diagram', label: 'Diagram' },
+];
 
 export default function SchemaPage() {
     const pack = useAppStore(s => s.schemaPack);
@@ -40,56 +46,48 @@ export default function SchemaPage() {
     if (!pack) return null;
 
     const table = pack.tables.find(t => t.name === selectedTable);
+    const { meta } = pack;
 
     return (
         <div className="schema-page">
-            {/* Left panel: table list */}
-            <div className="card" style={{ padding: 16, alignSelf: 'flex-start', position: 'sticky', top: 80 }}>
-                <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div>
-                        <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{pack.meta.dbName}</div>
-                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                            {[
-                                pack.meta.dbVersion,
-                                // In MySQL the schema is the database, already named above.
-                                pack.meta.schema !== pack.meta.dbName && pack.meta.schema,
-                                `${pack.tables.length} tables`,
-                            ].filter(Boolean).join(' · ')}
-                        </div>
-                    </div>
-                    <CopyButton getText={async () => schemaText} label="📋 Copy for AI" />
+            <aside className="db-side" aria-label="Tables">
+                <div className="db-meta">
+                    <h2>{meta.dbName}</h2>
+                    <dl>
+                        {meta.dbVersion && <><dt>Server</dt><dd>{meta.dbVersion}</dd></>}
+                        {/* In MySQL the schema is the database, already named above. */}
+                        {meta.schema !== meta.dbName && <><dt>Schema</dt><dd>{meta.schema}</dd></>}
+                        <dt>Tables</dt><dd>{pack.tables.length}</dd>
+                    </dl>
+                    <CopyButton getText={async () => schemaText} label="Copy for AI" />
                 </div>
-                <TableList
-                    tables={pack.tables}
-                    selected={selectedTable}
-                    onSelect={selectTable}
-                />
-            </div>
+                <TableList tables={pack.tables} selected={selectedTable} onSelect={selectTable} />
+            </aside>
 
-            {/* Right panel: detail */}
-            <div className="detail-panel">
-                {table ? (
-                    <div className="card">
-                        <div className="tabs">
+            {table ? (
+                <section className="sheet">
+                    <TableTitle table={table} relationships={pack.relationships} />
+                    <div className="tabs" role="tablist" aria-label="Table view">
+                        {TABS.map(t => (
                             <button
-                                className={`tab ${tab === 'columns' ? 'active' : ''}`}
-                                onClick={() => update({ tab: 'columns' }, false)}
+                                key={t.id}
+                                type="button"
+                                role="tab"
+                                className="tab"
+                                aria-selected={tab === t.id}
+                                onClick={() => update({ tab: t.id }, false)}
                             >
-                                Columns & Indexes
+                                {t.label}
                             </button>
-                            <button
-                                className={`tab ${tab === 'diagram' ? 'active' : ''}`}
-                                onClick={() => update({ tab: 'diagram' }, false)}
-                            >
-                                Diagram
-                            </button>
+                        ))}
+                    </div>
+
+                    {tab === 'columns' ? (
+                        <div className="tab-body" role="tabpanel">
+                            <TableDetail table={table} relationships={pack.relationships} onSelect={selectTable} />
                         </div>
-
-                        {tab === 'columns' && (
-                            <TableDetail table={table} relationships={pack.relationships} />
-                        )}
-
-                        {tab === 'diagram' && (
+                    ) : (
+                        <div className="tab-body flush" role="tabpanel">
                             <ErdView
                                 pack={pack}
                                 focus={table.name}
@@ -97,15 +95,17 @@ export default function SchemaPage() {
                                 onSelect={selectTable}
                                 onMode={m => update({ view: m }, false)}
                             />
-                        )}
-                    </div>
-                ) : (
-                    <div className="empty-state">
-                        <div className="empty-icon">📊</div>
-                        <p>{pack.tables.length ? 'Select a table to view its schema' : `No tables in schema "${pack.meta.schema}"`}</p>
-                    </div>
-                )}
-            </div>
+                        </div>
+                    )}
+                </section>
+            ) : (
+                <section className="sheet empty-state">
+                    <p>
+                        Schema <code>{meta.schema}</code> has no tables. Check the schema name
+                        on the connect page, or that this user can see its tables.
+                    </p>
+                </section>
+            )}
         </div>
     );
 }

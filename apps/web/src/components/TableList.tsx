@@ -17,34 +17,36 @@ export default function TableList({ tables, selected, onSelect }: TableListProps
     }, [tables, search]);
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <div style={{ marginBottom: 12 }}>
+        <>
+            <div className="table-search">
                 <input
-                    type="text"
+                    type="search"
                     className="form-input"
-                    placeholder="Search tables..."
+                    placeholder="Find a table"
+                    aria-label="Find a table"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    style={{ width: '100%', padding: '6px 10px' }}
                 />
             </div>
             {filteredTables.length === 0 ? (
-                <div style={{ padding: 12, color: 'var(--text-muted)', fontSize: '0.875rem' }}>No tables found.</div>
+                <p className="table-list-empty">No table names contain “{search}”.</p>
             ) : (
-                <ul className="table-list" style={{ overflowY: 'auto', flex: 1 }}>
+                <ul className="table-list">
                     {filteredTables.map(t => (
-                        <li
-                            key={t.name}
-                            className={`table-list-item ${t.name === selected ? 'active' : ''}`}
-                            onClick={() => onSelect(t.name)}
-                        >
-                            <span className="table-icon">⊞</span>
-                            <span>{t.name}</span>
-                            <span className="col-count">{t.columns.length} cols</span>
+                        <li key={t.name}>
+                            <button
+                                type="button"
+                                aria-current={t.name === selected}
+                                onClick={() => onSelect(t.name)}
+                                title={`${t.columns.length} columns`}
+                            >
+                                <span className="nm">{t.name}</span>
+                                <span className="n">{t.columns.length}</span>
+                            </button>
                         </li>
                     ))}
                 </ul>
             )}
-        </div>
+        </>
     );
 }

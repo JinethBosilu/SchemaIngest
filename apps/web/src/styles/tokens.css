@@ -1,0 +1,44 @@
+/* The look is an engineer's data-dictionary sheet: cool paper, ink-blue
+   type and hairline rules. Colour carries meaning only - ink for things you
+   can act on, ochre for primary keys, the erd pair for direction. */
+:root {
+  --paper: #eef2f5;
+  --sheet: #fbfcfd;
+  --rule: #c9d3dd;
+  --rule-faint: #dfe6ed;
+  --ink: #1f3a5f;
+  --ink-deep: #142a47;
+  --ink-wash: #e3eaf2;
+  --graphite: #55657a;
+  --pencil: #637389;
+  --key: #8a5a00;
+  --alert: #a3262a;
+  --alert-wash: #f7e9e9;
+  --ok: #2e6b4f;
+  --ok-wash: #e5f0ea;
+  --caution: #8a5a00;
+  --caution-wash: #f6efe0;
+
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+
+  --radius: 3px;
+  --transition: 120ms ease-out;
+
+  /* Diagram. Direction is the one thing it has to say clearly, so it is a
+     colour pair used in both views: blue is "this table points at that one",
+     teal the other way round, violet both ways. */
+  --erd-out: #2f6db5;
+  --erd-in: #1f7a6a;
+  --erd-both: #6b4fa0;
+  --erd-near: #9aa6b4;
+  --erd-out-soft: #4f84c2;
+  --erd-in-soft: #3b8c7d;
+  --erd-out-rim: #9dbbe0;
+  --erd-in-rim: #95c7bc;
+  --erd-focus-bg: #e4ebf2;
+  --erd-rim: #7a8899;
+  --erd-key: var(--key);
+  --erd-canvas: var(--sheet);
+  --erd-grid: #e9eef3;
+}

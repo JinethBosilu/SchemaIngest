@@ -1,0 +1,268 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  background: var(--paper);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+code, .mono {
+  font-family: var(--font-mono);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* ─── Frame ─────────────────────────────────────────────── */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 24px;
+  background: var(--sheet);
+  border-bottom: 1px solid var(--rule);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.brand svg {
+  flex: none;
+}
+
+.agent-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--graphite);
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--pencil);
+}
+
+.status-dot.connected {
+  background: var(--ok);
+}
+
+.agent-status .btn {
+  margin-left: 8px;
+}
+
+.app-main {
+  flex: 1;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+/* ─── Sheet: the one surface ────────────────────────────── */
+.sheet {
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+}
+
+.sheet-head {
+  padding: 24px 28px 20px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.sheet-head h1 {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.sheet-head p {
+  margin-top: 6px;
+  max-width: 60ch;
+  color: var(--graphite);
+}
+
+.sheet-body {
+  padding: 24px 28px 28px;
+}
+
+/* ─── Buttons ───────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--ink);
+  color: var(--sheet);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--ink-deep);
+}
+
+.btn-secondary {
+  background: var(--sheet);
+  color: var(--ink);
+  border-color: var(--rule);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--ink);
+}
+
+.btn-sm {
+  padding: 5px 10px;
+  font-size: 13px;
+  gap: 6px;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+/* ─── Notes: a ruled margin, coloured by what they say ──── */
+.note {
+  padding: 10px 14px;
+  border-left: 3px solid var(--ink);
+  background: var(--ink-wash);
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.note.ok { border-left-color: var(--ok); background: var(--ok-wash); color: var(--ok); }
+.note.alert { border-left-color: var(--alert); background: var(--alert-wash); color: var(--alert); }
+.note.caution { border-left-color: var(--caution); background: var(--caution-wash); color: var(--caution); }
+.note + .note, .note + .hint, * + .note { margin-top: 12px; }
+
+.note .spinner {
+  margin-right: 8px;
+  vertical-align: -2px;
+}
+
+.note code { white-space: nowrap; color: inherit; }
+
+.hint {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--graphite);
+}
+
+.hint code, .note code, .sheet-head code {
+  font-size: 0.92em;
+  color: var(--ink);
+}
+
+ol.hint {
+  padding-left: 20px;
+}
+
+ol.hint li + li {
+  margin-top: 4px;
+}
+
+/* ─── Spinner ───────────────────────────────────────────── */
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+  flex: none;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Copy button ───────────────────────────────────────── */
+.copy-btn {
+  position: relative;
+  display: inline-block;
+}
+
+.copy-btn .btn.done {
+  border-color: var(--ok);
+  color: var(--ok);
+}
+
+/* ─── Empty state ───────────────────────────────────────── */
+.empty-state {
+  padding: 64px 28px;
+  color: var(--graphite);
+}
+
+.empty-state p {
+  max-width: 48ch;
+}
+
+@media (max-width: 600px) {
+  .app-header { padding: 10px 16px; }
+  .app-main { padding: 20px 16px; }
+  .sheet-head, .sheet-body { padding-left: 18px; padding-right: 18px; }
+  .agent-status .label { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation-duration: 0.01ms !important; }
+  .spinner { animation: spin 1.4s linear infinite !important; }
+}

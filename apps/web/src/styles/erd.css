@@ -1,0 +1,221 @@
+.erd {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 290px);
+  min-height: 480px;
+  background: var(--erd-canvas);
+  border: 1px solid var(--rule);
+  overflow: hidden;
+}
+
+.erd.erd-fullscreen {
+  height: 100vh;
+  border: none;
+}
+
+.erd-bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--sheet);
+  font-size: 12px;
+  color: var(--graphite);
+}
+
+.erd-modes {
+  display: flex;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+}
+
+.erd-modes button {
+  font: inherit;
+  font-size: 13px;
+  padding: 3px 14px;
+  border: 0;
+  background: none;
+  color: var(--graphite);
+  cursor: pointer;
+}
+
+.erd-modes button + button { border-left: 1px solid var(--rule); }
+.erd-modes button:hover { color: var(--ink); }
+.erd-modes button.on { background: var(--ink); color: var(--sheet); }
+.erd-modes button:focus-visible { outline: 2px solid var(--key); outline-offset: -2px; }
+
+.erd-counts { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.erd-counts b { font-family: var(--font-mono); font-size: 13px; color: var(--ink); font-weight: 500; }
+.erd-counts .o { color: var(--erd-out); }
+.erd-counts .i { color: var(--erd-in); }
+.erd-counts em { font-style: normal; font-variant-numeric: tabular-nums; font-weight: 600; }
+
+.erd-legend { display: flex; gap: 14px; flex-wrap: wrap; justify-content: flex-end; margin-left: auto; }
+.erd-legend i { display: inline-block; margin-right: 6px; }
+.erd-legend i.bar { width: 15px; height: 2px; vertical-align: 3px; }
+.erd-legend i.dot { width: 8px; height: 8px; border-radius: 50%; vertical-align: 0; }
+.erd-legend .out { background: var(--erd-out); }
+.erd-legend .in { background: var(--erd-in); }
+.erd-legend .both { background: var(--erd-both); }
+.erd-legend .near { background: var(--erd-near); }
+.erd-legend i.dash { width: 15px; height: 0; border-top: 2px dashed var(--erd-rim); vertical-align: 3px; }
+
+.erd-toggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--graphite); cursor: pointer; white-space: nowrap; user-select: none;
+}
+.erd-toggle input { accent-color: var(--ink); margin: 0; }
+
+.erd-note {
+  padding: 8px 14px; font-size: 13px; line-height: 1.45;
+  color: var(--caution); background: var(--caution-wash);
+  border-bottom: 1px solid var(--rule);
+  border-left: 3px solid var(--caution);
+}
+
+.erd-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--graphite);
+  cursor: pointer;
+}
+
+.erd-btn:hover { border-color: var(--rule); color: var(--ink); }
+
+/* The drafting grid: the one piece of decoration in the app, and only here. */
+.erd-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  background-color: var(--erd-canvas);
+  background-image:
+    linear-gradient(var(--erd-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--erd-grid) 1px, transparent 1px);
+  background-size: 16px 16px;
+  background-position: -1px -1px;
+}
+
+.erd-canvas { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+.erd-canvas:active { cursor: grabbing; }
+
+.erd-panel {
+  position: absolute;
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+}
+
+.erd-detail {
+  left: 14px;
+  bottom: 14px;
+  max-width: min(470px, 55%);
+  padding: 9px 12px;
+  font-size: 12px;
+  color: var(--graphite);
+  pointer-events: none;
+}
+
+.erd-detail:empty { display: none; }
+.erd-detail .hd { font-family: var(--font-mono); font-size: 13px; color: var(--ink); margin-bottom: 2px; word-break: break-word; }
+.erd-detail .who { font-size: 12px; color: var(--pencil); margin-bottom: 6px; }
+.erd-detail ul { list-style: none; margin: 0; padding: 0; font-family: var(--font-mono); font-size: 12px; color: var(--ink); }
+.erd-detail li span { color: var(--pencil); }
+.erd-detail .leg + .leg { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--rule-faint); }
+.erd-detail .who i { font-style: normal; color: var(--caution); }
+
+.erd-zoom { right: 14px; bottom: 14px; display: flex; }
+.erd-zoom button {
+  font: inherit;
+  font-size: 13px;
+  min-width: 30px;
+  height: 28px;
+  padding: 0 8px;
+  border: 0;
+  background: none;
+  color: var(--graphite);
+  cursor: pointer;
+}
+.erd-zoom button + button { border-left: 1px solid var(--rule-faint); }
+.erd-zoom button:hover { background: var(--ink-wash); color: var(--ink); }
+.erd-zoom button:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+
+.erd-canvas .ghint { font-family: var(--font-sans); font-size: 12px; fill: var(--graphite); }
+
+/* Table view: record cards */
+.erd-canvas .edge { fill: none; stroke-width: 1.4px; }
+.erd-canvas .edge.out { stroke: var(--erd-out); }
+.erd-canvas .edge.in { stroke: var(--erd-in); }
+.erd-canvas .card { cursor: pointer; outline: none; }
+.erd-canvas .card.dead { cursor: default; }
+.erd-canvas .card rect { fill: var(--sheet); stroke: var(--rule); stroke-width: 1px; }
+.erd-canvas .card.out rect { stroke: var(--erd-out-rim); }
+.erd-canvas .card.in rect { stroke: var(--erd-in-rim); }
+.erd-canvas .card:hover rect { fill: var(--ink-wash); }
+.erd-canvas .card .nm { font-family: var(--font-mono); font-size: 12.5px; font-weight: 500; fill: var(--ink); }
+.erd-canvas .card .tb { font-family: var(--font-mono); font-size: 10px; fill: var(--pencil); }
+.erd-canvas .card .jn { font-family: var(--font-mono); font-size: 10.5px; }
+.erd-canvas .card.out .jn { fill: var(--erd-out-soft); }
+.erd-canvas .card.in .jn { fill: var(--erd-in-soft); }
+.erd-canvas .card .chip { font-family: var(--font-sans); font-size: 9px; fill: var(--graphite); }
+.erd-canvas .card .rule { stroke: var(--rule-faint); }
+.erd-canvas .card:focus-visible rect { stroke: var(--ink); stroke-width: 2px; }
+/* The focused table is the one thing on the canvas that is not a link. */
+.erd-canvas .focus { cursor: default; }
+.erd-canvas .focus rect { fill: var(--erd-focus-bg); stroke: var(--ink); stroke-width: 1.5px; }
+.erd-canvas .card.focus .nm { font-size: 14px; font-weight: 600; }
+.erd-canvas .focus .fc { font-family: var(--font-mono); font-size: 11px; fill: var(--ink); }
+.erd-canvas .focus .fc.key { fill: var(--erd-key); }
+.erd-canvas .focus .fn { font-family: var(--font-mono); font-size: 10px; fill: var(--pencil); }
+.erd-canvas .focus .kb { font-family: var(--font-sans); font-size: 8px; fill: var(--erd-key); }
+/* Zoomed far out, the small type is noise: cards drop to names only. */
+.erd-canvas .lod .card .tb,
+.erd-canvas .lod .card .jn,
+.erd-canvas .lod .card .chip,
+.erd-canvas .lod .card .rule { display: none; }
+.erd-canvas .lod .card .nm { font-size: 15px; }
+
+/* Graph view: circles */
+.erd-canvas .spoke, .erd-canvas .chord, .erd-canvas .loop { fill: none; }
+.erd-canvas .spoke { stroke-width: 1.2px; }
+.erd-canvas .spoke.out { stroke: var(--erd-out); }
+.erd-canvas .spoke.in { stroke: var(--erd-in); }
+.erd-canvas .spoke.both { stroke: var(--erd-both); }
+.erd-canvas .loop { stroke: var(--erd-out); stroke-width: 1.2px; }
+.erd-canvas .chord { stroke: var(--erd-near); stroke-width: 1px; }
+/* Links guessed from column names are dashed, never drawn like declared keys. */
+.erd-canvas .edge.inferred, .erd-canvas .spoke.inferred, .erd-canvas .chord.inferred { stroke-dasharray: 5 4; }
+.erd-canvas .card.inferred rect { stroke-dasharray: 4 3; }
+.erd-canvas .node.inferred circle { fill-opacity: 0.45; stroke-dasharray: 3 2; }
+.erd-canvas .node { cursor: pointer; outline: none; }
+.erd-canvas .node.dead { cursor: default; }
+.erd-canvas .node circle { stroke: var(--erd-canvas); stroke-width: 1.5px; }
+.erd-canvas .node.out circle { fill: var(--erd-out); }
+.erd-canvas .node.in circle { fill: var(--erd-in); }
+.erd-canvas .node.both circle { fill: var(--erd-both); }
+.erd-canvas .node .lbl {
+  font-family: var(--font-mono); font-size: 10px; fill: var(--ink);
+  pointer-events: none; paint-order: stroke; stroke: var(--erd-canvas);
+  stroke-width: 3px; stroke-linejoin: round;
+}
+.erd-canvas .node:focus-visible circle { stroke: var(--ink); stroke-width: 2.5px; }
+.erd-canvas .node.hub circle { stroke: var(--erd-rim); }
+.erd-canvas .core circle { fill: var(--erd-focus-bg); stroke: var(--ink); stroke-width: 2px; }
+.erd-canvas .core .lbl {
+  font-family: var(--font-mono); font-size: 15px; font-weight: 600; fill: var(--ink);
+  pointer-events: none; paint-order: stroke; stroke: var(--erd-canvas);
+  stroke-width: 5px; stroke-linejoin: round;
+}
+.erd-canvas .core .halo { fill: var(--erd-canvas); opacity: 0.82; }
+.erd-canvas .lod .node .lbl { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .erd * { transition: none !important; animation: none !important; }
+}
