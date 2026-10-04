@@ -10,12 +10,18 @@ from schemaingest.models import ConstraintInfo, IndexInfo, Relationship, SchemaP
 
 # ─── SQL queries ──────────────────────────────────────────────────────
 
+# information_schema calls a partitioned table and each of its partitions a
+# BASE TABLE alike; partitions are left out, so a partitioned table is listed
+# once, as its parent.
 _TABLES_SQL = """
-SELECT table_name
-FROM information_schema.tables
-WHERE table_schema = %s
-  AND table_type = 'BASE TABLE'
-ORDER BY table_name;
+SELECT t.table_name
+FROM information_schema.tables t
+JOIN pg_namespace n ON n.nspname = t.table_schema
+JOIN pg_class c ON c.relnamespace = n.oid AND c.relname = t.table_name
+WHERE t.table_schema = %s
+  AND t.table_type = 'BASE TABLE'
+  AND NOT c.relispartition
+ORDER BY t.table_name;
 """
 
 _COLUMNS_SQL = """
@@ -35,6 +41,10 @@ ORDER BY c.ordinal_position;
 # Keys, constraints and indexes come from pg_catalog rather than
 # information_schema: constraint_column_usage only shows columns of tables the
 # current role owns, and it cannot pair up the columns of a composite key.
+#
+# A foreign key into a partitioned table also gets a constraint per partition,
+# stored on the referencing table and pointing at that partition; those have a
+# conparentid, and only the top-level constraint is kept.
 
 _PK_SQL = """
 SELECT a.attname AS column_name
@@ -60,7 +70,7 @@ JOIN pg_class ft ON ft.oid = con.confrelid
 CROSS JOIN LATERAL unnest(con.conkey, con.confkey) WITH ORDINALITY AS k(attnum, fattnum, ord)
 JOIN pg_attribute a ON a.attrelid = con.conrelid AND a.attnum = k.attnum
 JOIN pg_attribute fa ON fa.attrelid = con.confrelid AND fa.attnum = k.fattnum
-WHERE n.nspname = %s AND t.relname = %s AND con.contype = 'f'
+WHERE n.nspname = %s AND t.relname = %s AND con.contype = 'f' AND con.conparentid = 0
 ORDER BY con.conname, k.ord;
 """
 
@@ -88,6 +98,7 @@ FROM pg_constraint con
 JOIN pg_class t ON t.oid = con.conrelid
 JOIN pg_namespace n ON n.oid = t.relnamespace
 WHERE n.nspname = %s AND t.relname = %s AND con.contype IN ('p', 'f', 'u', 'c')
+  AND con.conparentid = 0
 ORDER BY con.conname;
 """
 

@@ -61,6 +61,31 @@ CREATE TABLE categories (
     id        integer PRIMARY KEY,
     parent_id integer REFERENCES categories(id)
 );
+
+-- Partitioned table: one partition is itself partitioned. Only the parent
+-- belongs in the pack.
+CREATE TABLE events (
+    id         integer NOT NULL,
+    created_at date    NOT NULL,
+    kind       text    NOT NULL,
+    PRIMARY KEY (id, created_at)
+) PARTITION BY RANGE (created_at);
+CREATE TABLE events_2026_01 PARTITION OF events
+    FOR VALUES FROM ('2026-01-01') TO ('2026-02-01');
+CREATE TABLE events_2026_02 PARTITION OF events
+    FOR VALUES FROM ('2026-02-01') TO ('2026-03-01') PARTITION BY RANGE (created_at);
+CREATE TABLE events_2026_02_a PARTITION OF events_2026_02
+    FOR VALUES FROM ('2026-02-01') TO ('2026-02-15');
+
+-- A foreign key into a partitioned table: Postgres also stores a constraint
+-- per partition on this table, each pointing at that partition.
+CREATE TABLE event_notes (
+    id            integer PRIMARY KEY,
+    event_id      integer NOT NULL,
+    event_created date    NOT NULL,
+    CONSTRAINT event_notes_event_fkey FOREIGN KEY (event_id, event_created)
+        REFERENCES events (id, created_at)
+);
 """
 
 
@@ -89,7 +114,8 @@ def _table(pack, name):
 
 def test_lists_tables(pack):
     assert [t.name for t in pack.tables] == [
-        "categories", "order_lines", "orders", "regions", "shipments", "warehouses",
+        "categories", "event_notes", "events", "order_lines", "orders", "regions",
+        "shipments", "warehouses",
     ]
     assert pack.meta.schema_ == SCHEMA
     assert pack.meta.engine == "postgresql"
@@ -148,3 +174,25 @@ def test_undeclared_links_are_inferred_and_marked(pack):
     assert inferred == [("shipments", "warehouse_id", "warehouses", "id")]
     # Declared keys are never repeated as inferred ones.
     assert not any(r.inferred for r in pack.relationships if r.fromTable in ("order_lines", "categories"))
+
+
+def test_partitioned_table_is_its_parent(pack):
+    events = _table(pack, "events")
+    assert [c.name for c in events.columns] == ["id", "created_at", "kind"]
+    assert events.primaryKey == ["id", "created_at"]
+    assert [i.columns for i in events.indexes] == [["id", "created_at"]]
+
+
+def test_fk_into_partitioned_table_targets_the_parent_once(pack):
+    rels = [r for r in pack.relationships if r.fromTable == "event_notes"]
+    assert [(r.fromColumn, r.toTable, r.toColumn, r.constraintName) for r in rels] == [
+        ("event_id", "events", "id", "event_notes_event_fkey"),
+        ("event_created", "events", "created_at", "event_notes_event_fkey"),
+    ]
+    fks = [c.name for c in _table(pack, "event_notes").constraints if c.type == "FOREIGN KEY"]
+    assert fks == ["event_notes_event_fkey"]
+
+
+def test_no_relationship_mentions_a_partition(pack):
+    names = {n for r in pack.relationships for n in (r.fromTable, r.toTable)}
+    assert not any(n.startswith("events_") for n in names)
