@@ -53,7 +53,7 @@ You'll see a **6-digit pairing code** in your terminal:
 
 ```
 +---------------------------------------------------------+
-|  SchemaIngest Agent v0.1.1                              |
+|  SchemaIngest Agent v0.1.2                              |
 |                                                         |
 |  Pairing code:  482916                                  |
 |  Enter this code in the web UI to connect.              |
