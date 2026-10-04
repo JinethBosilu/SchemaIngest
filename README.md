@@ -5,7 +5,10 @@
 ![Architecture](https://img.shields.io/badge/architecture-local--first-6366f1?style=flat-square)
 ![Python](https://img.shields.io/badge/agent-Python_3.10+-10b981?style=flat-square)
 [![PyPI](https://img.shields.io/pypi/v/schemaingest?style=flat-square)](https://pypi.org/project/schemaingest/)
+[![CI](https://img.shields.io/github/actions/workflow/status/JinethBosilu/SchemaIngest/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/JinethBosilu/SchemaIngest/actions/workflows/ci.yml)
 ![React](https://img.shields.io/badge/web-React_+_TypeScript-06b6d4?style=flat-square)
+
+![SchemaIngest demo: pair with the agent, connect, walk the relationship diagram, copy the schema for AI](docs/demo.gif)
 
 ## How It Works
 
@@ -50,7 +53,7 @@ You'll see a **6-digit pairing code** in your terminal:
 
 ```
 +---------------------------------------------------------+
-|  SchemaIngest Agent v0.1.0                              |
+|  SchemaIngest Agent v0.1.1                              |
 |                                                         |
 |  Pairing code:  482916                                  |
 |  Enter this code in the web UI to connect.              |
